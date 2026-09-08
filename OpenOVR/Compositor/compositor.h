@@ -3,7 +3,9 @@
 #include "generated/interfaces/vrtypes.h"
 #ifdef WIN32
 // Windows template libraries
-#include <atlbase.h>
+#ifdef _MSC_VER
+#include <atlbase.h> // ATL: MSVC-only, and only needed by the (disabled) DX10 path
+#endif
 #include <wrl/client.h>
 #endif
 

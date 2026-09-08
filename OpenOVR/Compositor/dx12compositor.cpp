@@ -6,7 +6,9 @@
 
 #include <string>
 
-#include <atlbase.h>
+#ifdef _MSC_VER
+#include <atlbase.h> // ATL is MSVC-only; this file only uses WRL ComPtr anyway
+#endif
 
 #include <DirectXMath.h>
 #include <d3dcompiler.h>
