@@ -74,7 +74,8 @@ static bool ReadJson(const std::wstring& path, Json::Value& result)
 	std::wstring_convert<convert_type, wchar_t> converter;
 	const std::string real_path = converter.to_bytes(path);
 #else
-	const std::wstring& real_path = path;
+	// std::filesystem::path: libstdc++ (MinGW) fstreams have no wstring overload
+	const std::filesystem::path real_path = path;
 #endif
 
 #ifndef ANDROID

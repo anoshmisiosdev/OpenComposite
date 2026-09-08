@@ -4,6 +4,7 @@
 #include "steamvr_abi.h"
 
 #include <codecvt>
+#include <filesystem>
 #include <fstream>
 #include <locale>
 
@@ -18,7 +19,9 @@ using namespace vr;
 static std::wstring_convert<std::codecvt_utf8<wchar_t>> CHAR_CONV;
 
 #ifdef _WIN32
-#define APISTR(str) (str)
+// Wrap in std::filesystem::path: MSVC's fstream has non-standard wchar_t*
+// overloads, libstdc++ (MinGW) only has the standard path overload.
+#define APISTR(str) (std::filesystem::path(str))
 #else
 #define APISTR(str) (CHAR_CONV.to_bytes(str))
 #endif

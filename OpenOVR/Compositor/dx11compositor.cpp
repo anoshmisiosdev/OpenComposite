@@ -350,7 +350,13 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 		context->RSGetState(&pRSState);
 		context->RSSetState(nullptr);
 
-		D3D11_VIEWPORT viewport = CD3D11_VIEWPORT(src, swapchain_rtvs[currentIndex]);
+		// mingw-w64's d3d11.h lacks the CD3D11_VIEWPORT helper; build the
+		// equivalent full-texture viewport by hand (same as CD3D11_VIEWPORT
+		// constructed from a Texture2D and its render target view).
+		D3D11_TEXTURE2D_DESC vpTexDesc;
+		src->GetDesc(&vpTexDesc);
+		D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)vpTexDesc.Width, (FLOAT)vpTexDesc.Height,
+			0.0f, 1.0f }; // MinDepth/MaxDepth (D3D11_MIN_DEPTH/D3D11_MAX_DEPTH)
 		context->RSSetViewports(1, &viewport);
 		D3D11_RECT rects[1];
 		rects[0].top = 0;
