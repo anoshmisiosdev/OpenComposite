@@ -15,6 +15,7 @@
 #include <sys/stat.h> // stat
 #ifdef _WIN32
 #include <direct.h> // _mkdir
+#include <io.h> // _commit
 #endif
 #ifdef __GLIBCXX__
 #include <unistd.h>
@@ -238,10 +239,15 @@ void oovr_flush_safe()
 		return;
 	}
 
+#ifdef _WIN32
+	// MinGW: no fsync(); _commit() is the Windows CRT equivalent
+	_commit(fd);
+#else
 	int r;
 	do {
 		r = fsync(fd);
 	} while (r < 0 && errno == EINTR);
+#endif
 #endif
 }
 

@@ -36,7 +36,7 @@ std::string GetEnv(const std::string& var);
 	} while (0)
 #define OOVR_ABORTF(msg, ...)                                                        \
 	do {                                                                             \
-		oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, __VA_ARGS__); \
+		oovr_abort_raw(__FILE__, __LINE__, __FUNCTION__, msg, nullptr, ##__VA_ARGS__); \
 	} while (0)
 
 /**
@@ -54,7 +54,7 @@ std::string GetEnv(const std::string& var);
 #define OOVR_SOFT_ABORTF(msg, ...)                                                                      \
 	do {                                                                                                \
 		static int soft_abort_hit_count = 0;                                                            \
-		oovr_soft_abort_raw(__FILE__, __LINE__, __FUNCTION__, &soft_abort_hit_count, msg, __VA_ARGS__); \
+		oovr_soft_abort_raw(__FILE__, __LINE__, __FUNCTION__, &soft_abort_hit_count, msg, ##__VA_ARGS__); \
 	} while (0)
 
 // Work on GCC since it needs some varargs, and the actual value doesn't matter
@@ -69,7 +69,7 @@ std::string GetEnv(const std::string& var);
 		static bool oovr_hit_log_once_##__FUNCTION__ = false;                                      \
 		if (!oovr_hit_log_once_##__FUNCTION__) {                                                   \
 			oovr_hit_log_once_##__FUNCTION__ = true;                                               \
-			OOVR_LOGF("[once] " msg, __VA_ARGS__);                                                 \
+			OOVR_LOGF("[once] " msg, ##__VA_ARGS__);                                               \
 		}                                                                                          \
 	} while (false)
 
