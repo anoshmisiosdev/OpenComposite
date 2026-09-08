@@ -64,9 +64,18 @@ else ()
 	# In general using private symbols is a great idea, and it's something we'd want to do anyway.
 	# There is also -Bsymbolic set when linking the final shared library, see the bottom of this file
 	# FIXME the Vulkan functions still get exported, hopefully they won't fight with the application's ones.
-    add_definitions(-fvisibility=hidden)
+	# Use add_compile_options, not add_definitions: add_definitions leaks the
+	# flag to windres on MinGW cross builds, which rejects -fvisibility=hidden
+	add_compile_options(-fvisibility=hidden)
 	add_compile_options(-Wall -Wextra -Wpedantic -pedantic-errors -Wno-unused-parameter -Wno-missing-field-initializers -Wno-format-security)
 	set(ERROR_ON_WARNING_FLAG -Werror)
+endif ()
+
+# MinGW cross builds: CMake's MSVC platform files add /DWIN32 globally, but the
+# GNU-on-Windows platform files do not. The codebase guards Windows-specific
+# code with both #ifdef WIN32 and #ifdef _WIN32, so mirror MSVC's behaviour.
+if (WIN32 AND NOT MSVC)
+	add_compile_definitions(WIN32)
 endif ()
 if (ERROR_ON_WARNING)
 	add_compile_options(${ERROR_ON_WARNING_FLAG})
@@ -244,6 +253,9 @@ add_library(DrvOpenXR STATIC
 target_include_directories(DrvOpenXR PUBLIC DrvOpenXR/pub ${CMAKE_BINARY_DIR})
 target_include_directories(DrvOpenXR PRIVATE DrvOpenXR OpenOVR)
 target_link_libraries(DrvOpenXR PUBLIC OpenVR ${XrLib} ${jsoncppLib} ${glmLib})
+if (WIN32)
+	target_link_libraries(DrvOpenXR PUBLIC shlwapi) # PathStripPathA in DrvOpenXR.cpp
+endif ()
 if (NOT WIN32 AND NOT ANDROID)
 	target_link_libraries(DrvOpenXR PRIVATE X11) # for XFree()
 endif ()
@@ -512,13 +524,24 @@ if (OC_BACKTRACE)
 endif ()
 
 # Require that all symbols are defined on Linux - this is always done on Windows
-# Also on Linux, put all the static libraries in a group to avoid ordering problems
-if (NOT WIN32)
+# Also with GNU ld (Linux and MinGW), put all the static libraries in a group to
+# avoid ordering problems (OCCore and DrvOpenXR reference each other's symbols)
+if (MSVC)
+	# On MSVC this isn't a problem since the linker knows how to figure this stuff out
+	target_link_libraries(OCOVR OCCore DrvOpenXR)
+else ()
 	target_link_libraries(OCOVR PRIVATE -Wl,--no-undefined)
 	target_link_libraries(OCOVR PUBLIC -Wl,--start-group OCCore DrvOpenXR -Wl,--end-group)
-else ()
-	# On Windows this isn't a problem since the linker knows how to figure this stuff out
-	target_link_libraries(OCOVR OCCore DrvOpenXR)
+endif ()
+
+# MSVC picks these up via #pragma comment(lib, ...) in the sources, which GCC ignores
+if (WIN32 AND NOT MSVC)
+	target_link_libraries(OCCore PRIVATE d3d11 d3d12 dxgi d3dcompiler dbghelp)
+	target_link_libraries(DrvOpenXR PUBLIC d3d11 dxgi)
+
+	# Statically link the GCC/winpthread/libstdc++ runtimes so the DLL is
+	# self-contained (no libgcc_s_seh-1.dll etc. next to the game exe)
+	target_link_options(OCOVR PRIVATE -static -static-libgcc -static-libstdc++)
 endif ()
 
 # If we're on Linux, compile everything as position-independent

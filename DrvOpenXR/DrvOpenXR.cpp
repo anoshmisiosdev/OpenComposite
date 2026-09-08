@@ -24,6 +24,7 @@ static XrBackend* currentBackend;
 static bool initialised = false;
 
 #ifdef _WIN32
+#include <shlwapi.h> // PathStripPathA
 std::string GetExeName()
 {
 	char exePath[MAX_PATH + 1] = { 0 };
