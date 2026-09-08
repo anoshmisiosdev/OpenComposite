@@ -22,6 +22,18 @@ void XrHMD::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 
 vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, float fFarZ, EGraphicsAPIConvention convention)
 {
+	// See the HACK comment in GetPose below: xr_gbl is deleted and recreated
+	// by SetupSession (e.g. on a graphics-binding rebuild once a game submits
+	// its own D3D11 device) and this can be read concurrently from a render
+	// thread while it's briefly null. GetEyeToHeadTransform and GetPose
+	// already guard against this; this function was missing the same guard,
+	// reproduced with a controlled test (openvr_d3d11_test.cpp) racing real
+	// D3D11/Submit against GetProjectionMatrix/GetProjectionRaw/GetIPD.
+	while (!xr_gbl) {
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(20ms);
+	}
+
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
 
@@ -75,6 +87,15 @@ vr::HmdMatrix44_t XrHMD::GetProjectionMatrix(vr::EVREye eEye, float fNearZ, floa
 
 void XrHMD::GetProjectionRaw(vr::EVREye eEye, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom)
 {
+	// See the xr_gbl guard note in GetProjectionMatrix above - this is the
+	// call site actually observed crashing (null-pointer read at xr_gbl+8,
+	// reproduced with openvr_d3d11_test.cpp racing a real Submit() render
+	// loop against this function on a second thread).
+	while (!xr_gbl) {
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(20ms);
+	}
+
 	// This is how SteamVR seems to handle invalid eyes
 	if (eEye < 0 || (int)eEye >= 2)
 		eEye = vr::Eye_Left;
@@ -172,7 +193,17 @@ vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMe
 		// crashing on a null-plus-offset access. Return a valid, merely empty,
 		// allocation instead - unTriangleCount stays 0, so any caller that DOES
 		// check the count first still sees "no mesh" and behaves identically.
-		static thread_local vr::HmdVector2_t emptyMesh[1]{};
+		//
+		// Deliberately a fresh allocation per call (leaked, matching the
+		// "// FIXME memory allocation handling" precedent a few lines below
+		// for the real-mesh path - OpenVR's HiddenAreaMesh_t has no documented
+		// ownership/free contract either way): this is called once per eye,
+		// and a caller that keys any per-eye state off the returned pointer's
+		// identity (e.g. "have I already seen this exact pointer?") would
+		// otherwise see the *same* address for both eyes with a shared
+		// static buffer, which is a plausible way to trip an unrelated bug
+		// on the second call.
+		vr::HmdVector2_t* emptyMesh = new vr::HmdVector2_t[1]{};
 		return vr::HiddenAreaMesh_t{ emptyMesh, 0 };
 	}
 
@@ -278,6 +309,12 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 
 float XrHMD::GetIPD()
 {
+	// See the xr_gbl guard note in GetProjectionMatrix above.
+	while (!xr_gbl) {
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(20ms);
+	}
+
 	const XruCachedViews& cachedViews = xr_gbl->GetCachedViews(xr_gbl->viewSpace);
 	const XrViewState& state = cachedViews.viewState;
 	const std::array<XrView, XruEyeCount>& views = cachedViews.views;

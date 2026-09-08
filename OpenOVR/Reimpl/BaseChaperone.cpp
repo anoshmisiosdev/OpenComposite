@@ -12,12 +12,12 @@ using namespace vr;
 
 BaseChaperone::BaseChaperoneCalibrationState BaseChaperone::GetCalibrationState()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetCalibrationState", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetCalibrationState", _b); } }
 	return ChaperoneCalibrationState_OK;
 }
 bool BaseChaperone::GetPlayAreaSize(float* pSizeX, float* pSizeZ)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetPlayAreaSize", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetPlayAreaSize", _b); } }
 	vr::HmdVector3_t minPoint, maxPoint;
 	bool success = GetMinMaxPoints(minPoint, maxPoint);
 
@@ -32,7 +32,7 @@ bool BaseChaperone::GetPlayAreaSize(float* pSizeX, float* pSizeZ)
 }
 bool BaseChaperone::GetPlayAreaRect(HmdQuad_t* rect)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetPlayAreaRect", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetPlayAreaRect", _b); } }
 	memset(rect, 0, sizeof(vr::HmdQuad_t));
 
 	vr::HmdVector3_t minPoint, maxPoint;
@@ -57,33 +57,33 @@ bool BaseChaperone::GetPlayAreaRect(HmdQuad_t* rect)
 }
 void BaseChaperone::ReloadInfo(void)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::ReloadInfo", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::ReloadInfo", _b); } }
 	STUBBED();
 }
 void BaseChaperone::SetSceneColor(HmdColor_t color)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::SetSceneColor", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::SetSceneColor", _b); } }
 	OOVR_LOG_ONCE("No implementation");
 }
 void BaseChaperone::GetBoundsColor(HmdColor_t* pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance, HmdColor_t* pOutputCameraColor)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetBoundsColor", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetBoundsColor", _b); } }
 	STUBBED();
 }
 bool BaseChaperone::AreBoundsVisible()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::AreBoundsVisible", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::AreBoundsVisible", _b); } }
 	return BackendManager::Instance().AreBoundsVisible();
 }
 void BaseChaperone::ForceBoundsVisible(bool bForce)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::ForceBoundsVisible", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::ForceBoundsVisible", _b); } }
 	return BackendManager::Instance().ForceBoundsVisible(bForce);
 }
 
 bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t& minPoint, vr::HmdVector3_t& maxPoint)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetMinMaxPoints", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::GetMinMaxPoints", _b); } }
 	int count;
 	bool success = BackendManager::Instance().GetPlayAreaPoints(nullptr, &count);
 
@@ -114,7 +114,7 @@ bool BaseChaperone::GetMinMaxPoints(vr::HmdVector3_t& minPoint, vr::HmdVector3_t
 
 void BaseChaperone::ResetZeroPose(vr::ETrackingUniverseOrigin eTrackingUniverseOrigin)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::ResetZeroPose", "TRACE-ENTRY"); }
+	{ static thread_local int _n=0; if(_n++<20) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseChaperone::ResetZeroPose", _b); } }
 	if (eTrackingUniverseOrigin != TrackingUniverseSeated) {
 		OOVR_LOG_ONCE("No implementation");
 	}

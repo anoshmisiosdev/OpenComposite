@@ -15,6 +15,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 
 // Specific to OCOVR
 #include "Drivers/Backend.h"
@@ -48,6 +49,18 @@ class CVRCorrectLayout : public _InheritCVRLayout, public CVRCommon {
 using correct_layout_unique = std::unique_ptr<CVRCorrectLayout, std::function<void(CVRCorrectLayout*)>>;
 
 static std::map<std::string, correct_layout_unique> interfaces;
+// interfaces is read (cache-hit path) and written (cache-miss/insert path)
+// from VR_GetGenericInterface with no prior synchronization. Engines that
+// query OpenVR interfaces from more than one thread during startup (e.g. a
+// game thread and a render thread both resolving IVRSystem/IVRCompositor/...
+// concurrently) can race two std::map::operator[] calls, corrupting the
+// map's internal tree - and with it, whatever heap memory happens to sit
+// near these small, densely-packed interface objects. Observed as: a
+// vtable-slot call on a CVRSystem_XXX object reading a null/garbage function
+// pointer, with the specific garbage value varying nondeterministically
+// between otherwise-identical runs (the signature of a race, not a fixed
+// logic bug) - reproduced with a UE4 title (BasaultVR).
+static std::mutex interfaces_mutex;
 
 VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersion, EVRInitError* error)
 {
@@ -83,8 +96,12 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 		return interfaceClass->_GetStatFuncList();
 	}
 
-	if (interfaces.count(interfaceVersion)) {
-		return interfaces[interfaceVersion].get();
+	{
+		std::lock_guard<std::mutex> lock(interfaces_mutex);
+		auto it = interfaces.find(interfaceVersion);
+		if (it != interfaces.end()) {
+			return it->second.get();
+		}
 	}
 
 	// Hack for Half-Life: Alyx
@@ -124,10 +141,20 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 	OOVR_LOGF("TRACE-INTERFACE requested=%s", interfaceVersion);
 	CVRCorrectLayout* impl = (CVRCorrectLayout*)CreateInterfaceByName(interfaceVersion);
 	if (impl) {
+		void* vtbl = *reinterpret_cast<void**>(impl);
+		OOVR_LOGF("TRACE-INTERFACE-PTR %s this=%p vtable=%p", interfaceVersion, (void*)impl, vtbl);
 		correct_layout_unique ptr(impl, [](CVRCorrectLayout* cl) {
 			cl->Delete();
 		});
-		interfaces[interfaceVersion] = std::move(ptr);
+		{
+			std::lock_guard<std::mutex> lock(interfaces_mutex);
+			// Two threads racing a cache miss for the same interface each
+			// construct their own object here; the loser's insert below just
+			// overwrites the winner's map entry rather than being used, so it
+			// leaks (its Delete() deleter never runs). Wasteful but harmless -
+			// what mattered was making the container access itself safe.
+			interfaces[interfaceVersion] = std::move(ptr);
+		}
 		return impl;
 	}
 
