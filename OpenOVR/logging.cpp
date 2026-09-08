@@ -17,7 +17,7 @@
 #include <direct.h> // _mkdir
 #include <io.h> // _commit
 #endif
-#ifdef __GLIBCXX__
+#if defined(__GLIBCXX__) && !defined(_WIN32)
 #include <unistd.h>
 #endif
 
@@ -136,9 +136,16 @@ std::string GetEnv(const std::string& var)
 #ifdef ANDROID
 #include <android/log.h>
 #else
-static std::ofstream stream;
+/* Construct-on-first-use: a namespace-scope ofstream can be used by other
+ * globals' initializers before its own constructor runs (static init order),
+ * which crashes under GCC/MinGW where TU init order differs from MSVC. */
+static std::ofstream& log_stream()
+{
+	static std::ofstream stream;
+	return stream;
+}
 
-#ifdef __GLIBCXX__
+#if defined(__GLIBCXX__) && !defined(_WIN32)
 #include <ext/stdio_filebuf.h>
 
 // We need stream_fd to be thread-safe and signal-safe.
@@ -165,7 +172,7 @@ static FILE* cfile(std::ofstream& ofs)
 
 static void init_stream()
 {
-	if (!stream.is_open()) {
+	if (!log_stream().is_open()) {
 		string outputFilePath = "opencomposite.log";
 
 		// Try and write to standard location
@@ -189,16 +196,16 @@ static void init_stream()
 			outputFilePath = outputFolder + "/" + outputFilePath;
 #endif
 
-		stream.open(outputFilePath.c_str());
-#ifdef __GLIBCXX__
-		stream_fd.store(fileno(cfile(stream)), std::memory_order::seq_cst);
+		log_stream().open(outputFilePath.c_str());
+#if defined(__GLIBCXX__) && !defined(_WIN32)
+		stream_fd.store(fileno(cfile(log_stream())), std::memory_order::seq_cst);
 #endif
 	}
 }
 
 void oovr_printf_safe(const char* format, ...)
 {
-#ifdef __GLIBCXX__
+#if defined(__GLIBCXX__) && !defined(_WIN32)
 	int fd = stream_fd.load(std::memory_order::seq_cst);
 	if (fd < 0) {
 		return;
@@ -233,7 +240,7 @@ void oovr_printf_safe(const char* format, ...)
 
 void oovr_flush_safe()
 {
-#ifdef __GLIBCXX__
+#if defined(__GLIBCXX__) && !defined(_WIN32)
 	int fd = stream_fd.load(std::memory_order::seq_cst);
 	if (fd < 0) {
 		return;
@@ -259,7 +266,7 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 	__android_log_print(ANDROID_LOG_INFO, "OpenComposite", "%s:%d \t %s", func, line, msg);
 #else
 	init_stream();
-	stream << "[" << format_time() << "] " << func << ":" << line << "\t- " << (msg ? msg : "NULL") << std::endl;
+	log_stream() << "[" << format_time() << "] " << func << ":" << line << "\t- " << (msg ? msg : "NULL") << std::endl;
 
 	// Write it to stdout
 	// TODO on Windows, write it into the debug log
@@ -311,7 +318,7 @@ OC_NORETURN void oovr_abort_raw_va(const char* file, long line, const char* func
 #ifdef ANDROID
 	__android_log_print(ANDROID_LOG_ERROR, "OpenComposite", "ERROR: %s:%d \t %s", func, line, buff);
 #else
-	stream << std::flush;
+	log_stream() << std::flush;
 #endif
 
 	OOVR_MESSAGE(buff, title);
