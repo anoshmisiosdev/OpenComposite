@@ -1,10 +1,110 @@
 import re
-from typing import List
+from typing import List, Optional
 
-from stubs.interface import InterfaceDef
+from stubs.interface import InterfaceDef, Function
 from stubs.interface_spec import InterfaceSpec
 
 cflag_spec = re.compile(r"\[(?P<name>\w+)\]\s*=\s*(?P<value>.*)")
+
+# ---------------------------------------------------------------------------
+# x64 vtable ABI mismatch fix
+# ---------------------------------------------------------------------------
+#
+# Background: a non-static C++ member function that returns a struct/union too
+# large to fit in RAX (i.e. anything that isn't 1/2/4/8 bytes) must return it
+# via a caller-allocated "hidden pointer". MSVC's x64 ABI keeps `this` in RCX
+# and inserts that hidden pointer as an implicit *second* argument in RDX for
+# this specific case. GCC/mingw-w64's ABI instead always treats the hidden
+# pointer as the true first argument (as it would for a free function),
+# pushing `this` to RDX. This has been independently verified (see the
+# vtable-abi-fix branch's commit messages for the full writeup): against
+# Microsoft's own docs plus a detailed third-party ABI writeup for the MSVC
+# side, and empirically via objdump against the real x86_64-w64-mingw32-g++
+# for the GCC side, and reproduced end-to-end with a hand-written asm harness
+# that calls a real mingw-compiled vtable slot using each convention.
+#
+# Every OpenVR interface method exposed on our raw C++ vtable is a non-static
+# member function. Any of them whose return type is one of the structs below
+# is therefore vulnerable: a real MSVC-compiled game calling directly through
+# the vtable (as opposed to through the `FnTable:`-style flat C function
+# pointer table, which never goes through the C++ ABI at all and needs no fix)
+# will present `this`/hidden-pointer in the opposite registers to what our
+# GCC-compiled body expects, so the struct write lands on top of the
+# interface object itself, corrupting it - typically clobbering its vtable
+# pointer with a stray float bit-pattern from the struct that should have
+# been returned, and crashing on the next virtual call.
+#
+# The fix is a tiny naked (pure asm, no compiler-generated prologue/epilogue)
+# trampoline placed in the vtable slot itself: it swaps RCX/RDX (the only two
+# registers that ever hold `this`/hidden-pointer - real arguments always start
+# at R8 in both conventions, so nothing else needs touching) and tail-jumps
+# (not calls, so the real implementation's own RAX-pointer return behaviour is
+# preserved) into the real GCC-ABI implementation. That real implementation is
+# generated as a separate extern "C" free function (not the override itself),
+# so that OpenComposite's own GCC-compiled code - namely the FnTable stub
+# functions below, the only internal code that ever calls through one of
+# these methods - can keep calling it directly with the normal, self
+# consistent GCC ABI, without ever going anywhere near the swapped trampoline.
+#
+# This table is the complete, closed set of OpenVR struct/union types ever
+# returned by value from an interface method, across every header revision
+# vendored in OpenVRHeaders/ (openvr-0.9.12.h through openvr-2.5.1.h, plus the
+# custom_interfaces/*.h) - confirmed by grepping every `virtual <type> name(`
+# declaration in all of them. Each one has been byte-identical since
+# openvr-0.9.12, and a static_assert is emitted next to every use so that a
+# future header revision that changes a layout (or introduces a new
+# unlisted large-struct return) fails the build loudly rather than silently
+# reintroducing the corruption.
+LARGE_STRUCT_RETURN_TYPES = {
+    "HmdMatrix34_t": 48,
+    "HmdMatrix44_t": 64,
+    "DistortionCoordinates_t": 24,
+    "HiddenAreaMesh_t": 16,
+    "HmdColor_t": 16,
+}
+
+
+def _bare_return_type_name(return_type: str) -> Optional[str]:
+    """
+    Reduce a possibly namespace-qualified, possibly-const return type string down to
+    its bare type name, or return None if it's a pointer/reference type. Only a
+    genuine by-value struct/union return can ever trigger the hidden-return-pointer
+    ABI special case, so pointer/reference returns are never affected.
+    """
+    t = return_type.strip()
+    if t.endswith("*") or t.endswith("&"):
+        return None
+    if t.startswith("const "):
+        t = t[len("const "):].strip()
+    return t.rsplit("::", 1)[-1]
+
+
+def needs_abi_trampoline(return_type: str) -> bool:
+    """
+    True if a non-static member function returning this type by value must be
+    placed behind the RCX/RDX register-swap trampoline to be safely callable
+    through a raw C++ vtable by a real MSVC-compiled game. See
+    LARGE_STRUCT_RETURN_TYPES above.
+    """
+    return _bare_return_type_name(return_type) in LARGE_STRUCT_RETURN_TYPES
+
+
+def abi_real_name(cname: str, func: Function) -> str:
+    """
+    The globally-unique extern "C" symbol name for the real GCC-ABI implementation
+    backing the register-swap trampoline for the given interface method.
+    """
+    return f"oovr_abi_real_{cname}_{func.name}"
+
+
+def abi_real_params(cname: str, func: Function) -> str:
+    """
+    The parameter list for a function's ABI trampoline real-implementation, i.e. the
+    original member function's args with an explicit leading `self` parameter -
+    without leaving a dangling comma when the original function takes no arguments.
+    """
+    args = func.args_str()
+    return f"{cname} *self, {args}" if args else f"{cname} *self"
 
 
 def write_header(filename, iface):
@@ -24,6 +124,17 @@ def write_header(filename, iface):
 def _write_interface_header(fi, iface: InterfaceDef):
     cname = iface.proxy_class_name()
 
+    # Functions needing the ABI trampoline (see LARGE_STRUCT_RETURN_TYPES) have their
+    # real GCC-ABI implementation generated as an extern "C" free function rather than
+    # a member of the class (so the naked trampoline can jump to it by a plain,
+    # unmangled symbol name). It still needs access to the private `base` member, so
+    # forward-declare it ahead of the class and friend it from inside.
+    abi_funcs = [func for func in iface.functions if needs_abi_trampoline(func.return_type)]
+
+    fi.write(f"class {cname};\n")
+    for func in abi_funcs:
+        fi.write(f"extern \"C\" {func.return_type} {abi_real_name(cname, func)}({abi_real_params(cname, func)});\n")
+
     fi.write(f"""
 #include "Reimpl/{iface.base_header()}"
 class {cname} : public {iface.namespace()}::{iface.interface()}, public CVRCommon {{
@@ -42,6 +153,11 @@ public:
 
     for func in iface.functions:
         fi.write(f"\t{func.return_type} {func.name}({func.args_str()}) override;\n")
+
+    if abi_funcs:
+        fi.write("\t// ABI trampoline real implementations (see LARGE_STRUCT_RETURN_TYPES):\n")
+        for func in abi_funcs:
+            fi.write(f"\tfriend {func.return_type} {abi_real_name(cname, func)}({abi_real_params(cname, func)});\n")
 
     fi.write("};\n")
 
@@ -137,10 +253,43 @@ std::shared_ptr<{cls}> GetCreate{getter_name}() {{
             if namespace in f.return_type:
                 return_str += f" ({f.return_type})"
 
-            fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()}) {{\n"
-                     "\tif (oovr_global_configuration.LogAllOpenVRCalls())\n"
-                     f"\t\tOOVR_LOG(\"Entered function (from interface {ver.namespace()})\");\n"
-                     f"\t{return_str} base->{f.name}({nargs});\n}}\n")
+            log_stmt = ("\tif (oovr_global_configuration.LogAllOpenVRCalls())\n"
+                        f"\t\tOOVR_LOG(\"Entered function (from interface {ver.namespace()})\");\n")
+
+            if needs_abi_trampoline(f.return_type):
+                # See LARGE_STRUCT_RETURN_TYPES: this method returns a struct/union
+                # too large for RAX, which real MSVC-compiled games calling through
+                # the raw vtable pass differently to how GCC/mingw expects it. The
+                # real implementation goes in a separate extern "C" free function,
+                # and the override that actually occupies the vtable slot is a naked
+                # trampoline that swaps RCX/RDX (this <-> hidden return pointer) and
+                # tail-jumps into it. Do NOT call `{cname}::{f.name}` from any other
+                # GCC-compiled code (e.g. don't add a normal method-call site) - that
+                # would hit the trampoline with the wrong (GCC-native) register
+                # layout and corrupt things exactly the same way the bug does for
+                # real games. Internal code (e.g. the FnTable stub below) must call
+                # {abi_real_name(cname, f)}(...) directly instead.
+                real_name = abi_real_name(cname, f)
+                bare = _bare_return_type_name(f.return_type)
+                size = LARGE_STRUCT_RETURN_TYPES[bare]
+                fi.write(
+                    f"static_assert(sizeof({f.return_type}) == {size}, "
+                    f"\"{bare} layout changed - re-verify/update the vtable ABI trampoline "
+                    f"in scripts/stubs/codegen.py (LARGE_STRUCT_RETURN_TYPES)\");\n")
+                fi.write(f"extern \"C\" {f.return_type} {real_name}({abi_real_params(cname, f)}) {{\n"
+                         f"{log_stmt}"
+                         f"\t{return_str} self->base->{f.name}({nargs});\n}}\n")
+                fi.write(f"__attribute__((naked)) {f.return_type} {cname}::{f.name}({f.args_str()}) {{\n"
+                         "\t__asm__ volatile(\n"
+                         "\t\t\"mov %rcx, %rax\\n\\t\"\n"
+                         "\t\t\"mov %rdx, %rcx\\n\\t\"\n"
+                         "\t\t\"mov %rax, %rdx\\n\\t\"\n"
+                         f"\t\t\"jmp {real_name}\\n\\t\"\n"
+                         "\t);\n}\n")
+            else:
+                fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()}) {{\n"
+                         f"{log_stmt}"
+                         f"\t{return_str} base->{f.name}({nargs});\n}}\n")
 
         # Generate the fntable
         _build_fntable(fi, ver)
@@ -161,7 +310,18 @@ def _build_fntable(fi, ver: InterfaceDef):
 
     # Generate the stub functions
     for func in ver.functions:
-        call_stmt = f"return {inst_name}->{func.name}({func.args_names()});"
+        if needs_abi_trampoline(func.return_type):
+            # This method's vtable slot (inst_name->func.name) is a naked MSVC-ABI
+            # register-swap trampoline (see LARGE_STRUCT_RETURN_TYPES and write_stubs)
+            # meant only for real games calling through the raw C++ vtable. FnTable
+            # access is a flat C function-pointer table, not the C++ vtable, so this
+            # internal, GCC-compiled call site must bypass the trampoline entirely and
+            # call the real GCC-ABI implementation directly.
+            arg_names = func.args_names()
+            real_call_args = f"{inst_name}, {arg_names}" if arg_names else inst_name
+            call_stmt = f"return {abi_real_name(cname, func)}({real_call_args});"
+        else:
+            call_stmt = f"return {inst_name}->{func.name}({func.args_names()});"
 
         fi.write(
             f"static {func.return_type} OPENVR_FNTABLE_CALLTYPE {func_name_template % func.name}({func.args_str()}) {{ {call_stmt} }}\n")
