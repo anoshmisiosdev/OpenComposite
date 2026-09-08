@@ -154,5 +154,22 @@ extern XrSystemId xr_system;
 XrViewConfigurationView& xr_main_view(XruEye view_id);
 extern XrSessionGlobals* xr_gbl;
 
+/*
+ * xr_gbl is deleted and recreated by DrvOpenXR::SetupSession (e.g. on a
+ * graphics-binding rebuild once a game submits its own D3D11 device - the
+ * SteamVR-plugin behaviour UE4 titles trigger during startup), and it is
+ * briefly null while that happens. Any code that reads xr_gbl outside of
+ * SetupSession itself (which only touches it after finishing the
+ * recreation) needs to guard against that window - see the spin-wait
+ * pattern this mirrors in DrvOpenXR/XrHMD.cpp (GetEyeToHeadTransform,
+ * GetPose, GetProjectionMatrix, GetProjectionRaw, GetIPD), which is where
+ * this exact race was first reproduced and fixed with a controlled test
+ * (test/openvr_d3d11_test.cpp). Call this before the first xr_gbl-> access
+ * in any function reachable from a thread other than the one running
+ * SetupSession (tracking/pose queries, input polling, render model
+ * component lookups, etc. all qualify).
+ */
+void WaitForXrGbl();
+
 class XrExt;
 extern XrExt* xr_ext;

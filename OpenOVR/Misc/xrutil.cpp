@@ -6,6 +6,9 @@
 #include "convert.h"
 #include "xr_ext.h"
 
+#include <chrono>
+#include <thread>
+
 XrInstance xr_instance = XR_NULL_HANDLE;
 SessionWrapper xr_session;
 XrSystemId xr_system = XR_NULL_SYSTEM_ID;
@@ -13,6 +16,16 @@ XrViewConfigurationView xr_main_views[XruEyeCount] = {};
 XrSessionGlobals* xr_gbl = nullptr;
 
 XrExt* xr_ext = nullptr;
+
+void WaitForXrGbl()
+{
+	// See the declaration comment in xrutil.h and the matching guard in
+	// DrvOpenXR/XrHMD.cpp for the full rationale.
+	while (!xr_gbl) {
+		using namespace std::chrono_literals;
+		std::this_thread::sleep_for(20ms);
+	}
+}
 
 std::vector<XrViewConfigurationView> xr_views_list{};
 XrViewConfigurationView& xr_main_view(XruEye view_id)
@@ -160,6 +173,11 @@ void XrSessionGlobals::ClearCachedViews()
 
 XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)
 {
+	// See WaitForXrGbl() in xrutil.h - this is a very frequently hit chokepoint
+	// (every tracked-device pose query funnels through here), so guard it here
+	// rather than in each of its many callers.
+	WaitForXrGbl();
+
 	switch (origin) {
 	case vr::TrackingUniverseSeated:
 		return xr_gbl->seatedSpace;
@@ -174,6 +192,9 @@ XrSpace xr_space_from_tracking_origin(vr::ETrackingUniverseOrigin origin)
 
 XrSpace xr_space_from_ref_space_type(XrReferenceSpaceType spaceType)
 {
+	// See WaitForXrGbl() in xrutil.h.
+	WaitForXrGbl();
+
 	switch (spaceType) {
 	case XR_REFERENCE_SPACE_TYPE_VIEW:
 		return xr_gbl->viewSpace;

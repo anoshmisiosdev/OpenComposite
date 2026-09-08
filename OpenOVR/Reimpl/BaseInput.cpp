@@ -2109,6 +2109,9 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 	if (!dev)
 		return vr::VRInputError_InvalidDevice;
 
+	// See WaitForXrGbl() in xrutil.h.
+	WaitForXrGbl();
+
 	if (!xr_gbl->handTrackingProperties.supportsHandTracking) {
 		dev->SetHandTrackingValid(false);
 		return getEstimatedBoneData(hand, eTransformSpace, eMotionRange, std::span<VRBoneTransform_t, eBone_Count>(pTransformArray, eBone_Count));
@@ -2170,6 +2173,9 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 
 	ZeroMemory(pSkeletalSummaryData, sizeof(VRSkeletalSummaryData_t));
 
+	// See WaitForXrGbl() in xrutil.h.
+	WaitForXrGbl();
+
 	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
 		return getRealSkeletalSummary(action->skeletalHand, pSkeletalSummaryData);
 	}
@@ -2180,6 +2186,10 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
 	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::getRealSkeletalSummary", "TRACE-ENTRY"); }
+	// See WaitForXrGbl() in xrutil.h - getRealSkeletalSummary is also called
+	// directly (not just via GetSkeletalSummaryData's guarded check above)
+	// from the legacy controller-state axis emulation path.
+	WaitForXrGbl();
 	XrHandJointsLocateInfoEXT locateInfo = { XR_TYPE_HAND_JOINTS_LOCATE_INFO_EXT };
 	locateInfo.baseSpace = xr_gbl->floorSpace;
 	locateInfo.time = xr_gbl->GetBestTime();
@@ -2768,6 +2778,10 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 	grip.y = 0;
 
 	// SteamVR seemingly writes to these two axis to represent finger curl on legacy input.
+	// See WaitForXrGbl() in xrutil.h - this is on the legacy GetControllerState
+	// emulation path, one of the most frequently called functions for a UE4
+	// SteamVR-plugin title polling controller axes every tick.
+	WaitForXrGbl();
 	VRSkeletalSummaryData_t skeletonData{};
 	if (xr_gbl->handTrackingProperties.supportsHandTracking) {
 		getRealSkeletalSummary((ITrackedDevice::TrackedDeviceType)hand, &skeletonData);

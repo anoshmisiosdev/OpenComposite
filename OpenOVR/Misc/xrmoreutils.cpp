@@ -10,6 +10,13 @@
 bool xr_utils::PoseFromSpace(vr::TrackedDevicePose_t* pose, XrSpace space, vr::ETrackingUniverseOrigin origin,
     std::optional<glm::mat4> extraTransform)
 {
+	// See WaitForXrGbl() in xrutil.h - this is on the tracked-device pose
+	// query path (called every time a game asks for HMD/controller poses),
+	// which can run concurrently with DrvOpenXR::SetupSession rebuilding
+	// xr_gbl on another thread (e.g. UE4's SteamVR plugin creating its own
+	// D3D11 device shortly after the game thread starts polling poses).
+	WaitForXrGbl();
+
 	auto baseSpace = xr_space_from_tracking_origin(origin);
 
 	XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };

@@ -53,17 +53,50 @@ def write_stubs(fi, iface: InterfaceSpec):
     getter_name = first_ver.getter_name()
 
     # Write the version-independent code that creates the instance of the base class
+    #
+    # NOTE on {var}_mutex: {var} (a std::weak_ptr) and {var}_unsafe (its raw
+    # pointer shadow) are process-wide singletons written from
+    # GetCreate{getter_name}() and from the shared_ptr's own deleter lambda,
+    # and read from Get{getter_name}(). Nothing here was ever atomic or
+    # lock-protected, so two threads racing a cache-miss for the same OpenVR
+    # interface (this can and does happen - see the interfaces_mutex comment
+    # in openvr_api.cpp: VR_GetGenericInterface only locks around the
+    # `interfaces` map itself, not around CreateInterfaceByName(), so two
+    # threads that both miss the cache both proceed to `new {cname}()`
+    # concurrently and thus both call GetCreate{getter_name}() concurrently)
+    # can interleave a std::weak_ptr::operator= on one thread with a
+    # std::weak_ptr::lock() or another operator= on another thread. That's a
+    # data race on ordinary (non-atomic) memory - UB - and in practice tears
+    # the weak_ptr's internal pointer/control-block fields, so a *later*,
+    # perfectly single-threaded caller can construct a shared_ptr from the
+    # torn weak_ptr and get a garbage/non-null-but-invalid .get() pointer.
+    # This matches corruption observed in the wild as a CVRSystem_XXX::base
+    # (a `const std::shared_ptr<BaseSystem>` set exactly once, at
+    # construction, from GetCreateBaseSystem()) pointing at garbage - with no
+    # single deterministic repro, because it depends on how the two threads'
+    # weak_ptr writes interleave. Guard all of {var}/{var}_unsafe with one
+    # mutex so construction (and the paired lock()/lookup) of this singleton
+    # is atomic end-to-end, not just the final map insert in openvr_api.cpp.
     fi.write(f"""
 #include "GVR{iface.name}.gen.h"
 // Single inst of {cls}
 static std::weak_ptr<{cls}> {var};
 static {cls} *{var}_unsafe = NULL;
-std::shared_ptr<{cls}> Get{getter_name}() {{ return {var}.lock(); }};
+static std::mutex {var}_mutex;
+std::shared_ptr<{cls}> Get{getter_name}() {{
+    std::lock_guard<std::mutex> lock({var}_mutex);
+    return {var}.lock();
+}};
 {cls}* GetUnsafe{getter_name}() {{ return {var}_unsafe; }};
 std::shared_ptr<{cls}> GetCreate{getter_name}() {{
+    std::lock_guard<std::mutex> lock({var}_mutex);
     std::shared_ptr<{cls}> ret = {var}.lock();
     if(!ret) {{
-        ret = std::shared_ptr<{cls}>(new {cls}(), []({cls} *obj){{ {var}_unsafe = NULL; delete obj; }});
+        ret = std::shared_ptr<{cls}>(new {cls}(), []({cls} *obj){{
+            std::lock_guard<std::mutex> lock({var}_mutex);
+            {var}_unsafe = NULL;
+            delete obj;
+        }});
         {var} = ret;
         {var}_unsafe = ret.get();
     }}

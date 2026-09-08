@@ -10,6 +10,7 @@
 #include <errno.h> // errno, ENOENT, EEXIST
 #include <fstream>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 #include <stdarg.h>
 #include <sys/stat.h> // stat
@@ -145,6 +146,33 @@ static std::ofstream& log_stream()
 	return stream;
 }
 
+/*
+ * log_stream() is one process-wide std::ofstream, and every OOVR_LOG/OOVR_LOGF
+ * call in the entire codebase - the overwhelming majority of which run on
+ * whatever thread happens to call into OpenComposite, including a UE4 title's
+ * many worker/loading threads plus the game and render threads - ends up
+ * writing through it via oovr_log_raw() below. That was previously completely
+ * unsynchronized ("Do we need to close the stream or something? What about
+ * multiple threads?" - see the old comment this replaces), which means two
+ * threads logging at once could interleave non-atomic operations on the same
+ * std::ofstream/std::basic_filebuf: concurrent unsynchronized use of one
+ * stream object (as opposed to distinct stream objects, which is fine) is a
+ * data race - UB - and libstdc++'s filebuf owns a dynamically-growable
+ * internal buffer, so a torn concurrent write/grow can corrupt that buffer's
+ * heap allocation and, with it, whatever unrelated heap object the allocator
+ * placed next to it. init_stream()'s "if (!is_open()) open(...)" below is
+ * also a plain check-then-act race if two threads hit it before the first
+ * open() call completes. This is a very live path: it fires on essentially
+ * every call into OpenComposite, far more often than the interfaces-map or
+ * xr_gbl races, and lines up with heap corruption observed early in a UE4
+ * title's startup (many threads/systems initializing and logging at once) -
+ * e.g. a freshly-created CVRSystem_020 instance's own vtable pointer reading
+ * back as exactly 0 moments after creation, with nothing else in the log
+ * between its creation and that crash pointing at a more direct cause.
+ * One mutex around every log_stream() access closes this off.
+ */
+static std::mutex log_stream_mutex;
+
 #if defined(__GLIBCXX__) && !defined(_WIN32)
 #include <ext/stdio_filebuf.h>
 
@@ -265,16 +293,22 @@ void oovr_log_raw(const char* file, long line, const char* func, const char* msg
 #ifdef ANDROID
 	__android_log_print(ANDROID_LOG_INFO, "OpenComposite", "%s:%d \t %s", func, line, msg);
 #else
-	init_stream();
-	log_stream() << "[" << format_time() << "] " << func << ":" << line << "\t- " << (msg ? msg : "NULL") << std::endl;
+	// format_time() itself isn't thread-safe either (localtime() return value
+	// is process-global static storage) - compute it before taking the lock
+	// isn't enough to fix that, but at least keeps the critical section short.
+	// See log_stream_mutex's comment above for why the lock is needed at all.
+	std::string timestamp = format_time();
+	{
+		std::lock_guard<std::mutex> lock(log_stream_mutex);
+		init_stream();
+		log_stream() << "[" << timestamp << "] " << func << ":" << line << "\t- " << (msg ? msg : "NULL") << std::endl;
+	}
 
 	// Write it to stdout
 	// TODO on Windows, write it into the debug log
 #ifndef _WIN32
 	printf("[OC] %s:%ld \t %s\n", func, line, msg);
 #endif
-
-	// Do we need to close the stream or something? What about multiple threads?
 #endif
 }
 
@@ -318,7 +352,10 @@ OC_NORETURN void oovr_abort_raw_va(const char* file, long line, const char* func
 #ifdef ANDROID
 	__android_log_print(ANDROID_LOG_ERROR, "OpenComposite", "ERROR: %s:%d \t %s", func, line, buff);
 #else
-	log_stream() << std::flush;
+	{
+		std::lock_guard<std::mutex> lock(log_stream_mutex);
+		log_stream() << std::flush;
+	}
 #endif
 
 	OOVR_MESSAGE(buff, title);

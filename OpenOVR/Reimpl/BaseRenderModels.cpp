@@ -614,6 +614,9 @@ bool BaseRenderModels::TryGetComponentState(ITrackedDevice::TrackedDeviceType ha
 		return false;
 	}
 
+	// See WaitForXrGbl() in xrutil.h.
+	WaitForXrGbl();
+
 	XrSpaceLocation location = { XR_TYPE_SPACE_LOCATION };
 	OOVR_FAILED_XR_ABORT(xrLocateSpace(componentSpace, gripSpace, xr_gbl->GetBestTime(), &location));
 

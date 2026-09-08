@@ -244,6 +244,9 @@ HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
 	glm::mat4 m;
 	XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, nullptr, 0, {} };
 
+	// See WaitForXrGbl() in xrutil.h.
+	WaitForXrGbl();
+
 	OOVR_FAILED_XR_SOFT_ABORT(xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, xr_gbl->GetBestTime(), &location));
 
 	if ((location.locationFlags & XR_SPACE_LOCATION_POSITION_VALID_BIT) && (location.locationFlags & XR_SPACE_LOCATION_ORIENTATION_VALID_BIT)) {
@@ -912,6 +915,9 @@ void BaseSystem::ResetSeatedZeroPose()
 {
 	{ static thread_local int _n=0; if(_n++<50) { char _b[64]; snprintf(_b,sizeof(_b),"TRACE-ENTRY this=%p",(void*)this); oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ResetSeatedZeroPose", _b); } }
 	if (BackendManager::Instance().IsGraphicsConfigured()) {
+		// See WaitForXrGbl() in xrutil.h.
+		WaitForXrGbl();
+
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity, 0, {} };
 
