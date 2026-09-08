@@ -121,6 +121,7 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 		OOVR_ABORT("Illegal interface for apptype - see log");
 	}
 
+	OOVR_LOGF("TRACE-INTERFACE requested=%s", interfaceVersion);
 	CVRCorrectLayout* impl = (CVRCorrectLayout*)CreateInterfaceByName(interfaceVersion);
 	if (impl) {
 		correct_layout_unique ptr(impl, [](CVRCorrectLayout* cl) {

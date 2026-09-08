@@ -164,8 +164,16 @@ bool XrHMD::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulF
 vr::HiddenAreaMesh_t XrHMD::GetHiddenAreaMesh(vr::EVREye eEye, vr::EHiddenAreaMeshType type)
 {
 	if (!xr_ext->xrGetVisibilityMaskKHR_Available()) {
-		// This is what the docs say we should return if the mask is unavailable
-		return vr::HiddenAreaMesh_t{ nullptr, 0 };
+		// The OpenVR docs say {nullptr, 0} is correct here, but that path is
+		// essentially never exercised against real hardware (every real runtime
+		// implements XR_KHR_visibility_mask), and at least one game (UE4's
+		// SteamVR plugin, observed with a runtime lacking the extension) reads
+		// pVertexData unconditionally rather than checking the null case,
+		// crashing on a null-plus-offset access. Return a valid, merely empty,
+		// allocation instead - unTriangleCount stays 0, so any caller that DOES
+		// check the count first still sees "no mesh" and behaves identically.
+		static thread_local vr::HmdVector2_t emptyMesh[1]{};
+		return vr::HiddenAreaMesh_t{ emptyMesh, 0 };
 	}
 
 	// TODO verify the line loop mode works properly

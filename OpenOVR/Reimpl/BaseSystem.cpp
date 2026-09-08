@@ -100,41 +100,49 @@ BaseSystem::BaseSystem()
 
 void BaseSystem::GetRecommendedRenderTargetSize(uint32_t* width, uint32_t* height)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetRecommendedRenderTargetSize", "TRACE-ENTRY"); }
 	BackendManager::Instance().GetPrimaryHMD()->GetRecommendedRenderTargetSize(width, height);
 }
 
 HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetProjectionMatrix", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->GetProjectionMatrix(eye, znear, zfar);
 }
 
 void BaseSystem::GetProjectionRaw(EVREye eye, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetProjectionRaw", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->GetProjectionRaw(eye, pfLeft, pfRight, pfTop, pfBottom);
 }
 
 bool BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV, DistortionCoordinates_t* out)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ComputeDistortion", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->ComputeDistortion(eEye, fU, fV, out);
 }
 
 HmdMatrix34_t BaseSystem::GetEyeToHeadTransform(EVREye ovr_eye)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetEyeToHeadTransform", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->GetEyeToHeadTransform(ovr_eye);
 }
 
 bool BaseSystem::GetTimeSinceLastVsync(float* pfSecondsSinceLastVsync, uint64_t* pulFrameCounter)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetTimeSinceLastVsync", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->GetTimeSinceLastVsync(pfSecondsSinceLastVsync, pulFrameCounter);
 }
 
 int32_t BaseSystem::GetD3D9AdapterIndex()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetD3D9AdapterIndex", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 void BaseSystem::GetDXGIOutputInfo(int32_t* adapterIndex)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetDXGIOutputInfo", "TRACE-ENTRY"); }
 #ifdef SUPPORT_DX
 
 // TODO Turtle1331 use OOVR_ABORT from logging.h
@@ -192,6 +200,7 @@ void BaseSystem::GetDXGIOutputInfo(int32_t* adapterIndex)
 
 void BaseSystem::GetOutputDevice(uint64_t* pnDevice, ETextureType textureType, VkInstance_T* pInstance)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetOutputDevice", "TRACE-ENTRY"); }
 
 	switch (textureType) {
 	case TextureType_Vulkan: {
@@ -211,23 +220,27 @@ void BaseSystem::GetOutputDevice(uint64_t* pnDevice, ETextureType textureType, V
 
 bool BaseSystem::IsDisplayOnDesktop()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::IsDisplayOnDesktop", "TRACE-ENTRY"); }
 	return false; // Always in direct mode
 }
 
 bool BaseSystem::SetDisplayVisibility(bool bIsVisibleOnDesktop)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::SetDisplayVisibility", "TRACE-ENTRY"); }
 	return false; // Always render in direct mode
 }
 
 void BaseSystem::GetDeviceToAbsoluteTrackingPose(ETrackingUniverseOrigin toOrigin, float predictedSecondsToPhotonsFromNow,
     TrackedDevicePose_t* poseArray, uint32_t poseArrayCount)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetDeviceToAbsoluteTrackingPose", "TRACE-ENTRY"); }
 
 	BackendManager::Instance().GetDeviceToAbsoluteTrackingPose(toOrigin, predictedSecondsToPhotonsFromNow, poseArray, poseArrayCount);
 }
 
 HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose", "TRACE-ENTRY"); }
 	glm::mat4 m;
 	XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, nullptr, 0, {} };
 
@@ -243,6 +256,7 @@ HmdMatrix34_t BaseSystem::GetSeatedZeroPoseToStandingAbsoluteTrackingPose()
 
 HmdMatrix34_t BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetRawZeroPoseToStandingAbsoluteTrackingPose", "TRACE-ENTRY"); }
 	// These *are* the same coordinate systems? They were in LibOVR, let's assume they're the same here too
 	return G2S_m34(glm::mat4());
 }
@@ -251,6 +265,7 @@ uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass ta
     vr::TrackedDeviceIndex_t* indexArray, uint32_t indexCount,
     vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetSortedTrackedDeviceIndicesOfClass", "TRACE-ENTRY"); }
 
 	uint32_t outCount = 0;
 
@@ -281,17 +296,20 @@ uint32_t BaseSystem::GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass ta
 
 EDeviceActivityLevel BaseSystem::GetTrackedDeviceActivityLevel(vr::TrackedDeviceIndex_t unDeviceId)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetTrackedDeviceActivityLevel", "TRACE-ENTRY"); }
 	// TODO implement
 	return k_EDeviceActivityLevel_UserInteraction;
 }
 
 void BaseSystem::ApplyTransform(TrackedDevicePose_t* pOutputPose, const TrackedDevicePose_t* pTrackedDevicePose, const HmdMatrix34_t* pTransform)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ApplyTransform", "TRACE-ENTRY"); }
 	OOVR_SOFT_ABORT("ApplyTransform is not implemented! This will probably break things if they're using it!");
 }
 
 vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::ETrackedControllerRole unDeviceType)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetTrackedDeviceIndexForControllerRole", "TRACE-ENTRY"); }
 	vr::TrackedDeviceIndex_t unDeviceIndex = -1;
 
 	if (unDeviceType == TrackedControllerRole_LeftHand) {
@@ -310,6 +328,7 @@ vr::TrackedDeviceIndex_t BaseSystem::GetTrackedDeviceIndexForControllerRole(vr::
 
 vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr::TrackedDeviceIndex_t unDeviceIndex)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetControllerRoleForTrackedDeviceIndex", "TRACE-ENTRY"); }
 	if (unDeviceIndex == leftHandIndex) {
 		return TrackedControllerRole_LeftHand;
 	} else if (unDeviceIndex == rightHandIndex) {
@@ -321,6 +340,7 @@ vr::ETrackedControllerRole BaseSystem::GetControllerRoleForTrackedDeviceIndex(vr
 
 ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t deviceIndex)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetTrackedDeviceClass", "TRACE-ENTRY"); }
 	if (!IsTrackedDeviceConnected(deviceIndex))
 		return TrackedDeviceClass_Invalid;
 
@@ -338,11 +358,13 @@ ETrackedDeviceClass BaseSystem::GetTrackedDeviceClass(vr::TrackedDeviceIndex_t d
 
 bool BaseSystem::IsTrackedDeviceConnected(vr::TrackedDeviceIndex_t deviceIndex)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::IsTrackedDeviceConnected", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetDevice(deviceIndex) != nullptr;
 }
 
 bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetBoolTrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "bool");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -359,6 +381,7 @@ bool BaseSystem::GetBoolTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceI
 
 float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetFloatTrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "float");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -375,6 +398,7 @@ float BaseSystem::GetFloatTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDevic
 
 int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetInt32TrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "int32_t");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -391,6 +415,7 @@ int32_t BaseSystem::GetInt32TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDev
 
 uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetUint64TrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "uint64_t");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -407,6 +432,7 @@ uint64_t BaseSystem::GetUint64TrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 
 HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError* pErrorL)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetMatrix34TrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "HmdMatrix34_t");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -423,6 +449,7 @@ HmdMatrix34_t BaseSystem::GetMatrix34TrackedDeviceProperty(vr::TrackedDeviceInde
 
 uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, PropertyTypeTag_t propType, void* pBuffer, uint32_t unBufferSize, ETrackedPropertyError* pError)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetArrayTrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "array");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -456,6 +483,7 @@ uint32_t BaseSystem::GetArrayTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDe
 uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop,
     VR_OUT_STRING() char* value, uint32_t bufferSize, ETrackedPropertyError* pErrorL)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetStringTrackedDeviceProperty", "TRACE-ENTRY"); }
 	PropertyPrinter p(prop, unDeviceIndex, "string");
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(unDeviceIndex);
 
@@ -472,6 +500,7 @@ uint32_t BaseSystem::GetStringTrackedDeviceProperty(vr::TrackedDeviceIndex_t unD
 
 const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetPropErrorNameFromEnum", "TRACE-ENTRY"); }
 #define ERR_CASE(err) \
 	case err:         \
 		return #err
@@ -508,26 +537,31 @@ const char* BaseSystem::GetPropErrorNameFromEnum(ETrackedPropertyError error)
 
 bool BaseSystem::IsInputAvailable()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::IsInputAvailable", "TRACE-ENTRY"); }
 	return BackendManager::Instance().IsInputAvailable();
 }
 
 bool BaseSystem::IsSteamVRDrawingControllers()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::IsSteamVRDrawingControllers", "TRACE-ENTRY"); }
 	return !IsInputAvailable();
 }
 
 bool BaseSystem::ShouldApplicationPause()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ShouldApplicationPause", "TRACE-ENTRY"); }
 	return !IsInputAvailable();
 }
 
 bool BaseSystem::ShouldApplicationReduceRenderingWork()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ShouldApplicationReduceRenderingWork", "TRACE-ENTRY"); }
 	return !IsInputAvailable();
 }
 
 void BaseSystem::_OnPostFrame()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::_OnPostFrame", "TRACE-ENTRY"); }
 	frameNumber++;
 
 	// Note: OpenXR event handling is now in XrBackend
@@ -552,18 +586,21 @@ void BaseSystem::_OnPostFrame()
 
 void BaseSystem::_EnqueueEvent(const VREvent_t& e)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::_EnqueueEvent", "TRACE-ENTRY"); }
 	std::unique_lock lock(events_mutex);
 	events.push(e);
 }
 
 void BaseSystem::_BlockInputsUntilReleased()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::_BlockInputsUntilReleased", "TRACE-ENTRY"); }
 	blockingInputsUntilRelease[0] = true;
 	blockingInputsUntilRelease[1] = true;
 }
 
 float BaseSystem::SGetIpd()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::SGetIpd", "TRACE-ENTRY"); }
 	std::shared_ptr<IHMD> dev = BackendManager::Instance().GetPrimaryHMD();
 	float ipd = dev->GetIPD();
 	static float lastIpd = NAN;
@@ -576,6 +613,7 @@ float BaseSystem::SGetIpd()
 
 void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerState_t& last)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::CheckControllerEvents", "TRACE-ENTRY"); }
 	VRControllerState_t state;
 	GetControllerState(hand, &state, sizeof(state));
 
@@ -632,11 +670,13 @@ void BaseSystem::CheckControllerEvents(TrackedDeviceIndex_t hand, VRControllerSt
 
 bool BaseSystem::PollNextEvent(VREvent_t* pEvent, uint32_t uncbVREvent)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::PollNextEvent", "TRACE-ENTRY"); }
 	return PollNextEventWithPose(TrackingUniverseStanding, pEvent, uncbVREvent, NULL);
 }
 
 bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_t* pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t* pTrackedDevicePose)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::PollNextEventWithPose", "TRACE-ENTRY"); }
 	memset(pEvent, 0, uncbVREvent);
 
 	std::unique_lock lock(events_mutex);
@@ -660,16 +700,19 @@ bool BaseSystem::PollNextEventWithPose(ETrackingUniverseOrigin eOrigin, VREvent_
 
 const char* BaseSystem::GetEventTypeNameFromEnum(EVREventType eType)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetEventTypeNameFromEnum", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 HiddenAreaMesh_t BaseSystem::GetHiddenAreaMesh(EVREye eEye, EHiddenAreaMeshType type)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetHiddenAreaMesh", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->GetHiddenAreaMesh(eEye, type);
 }
 
 bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* controllerState, uint32_t controllerStateSize)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetControllerState", "TRACE-ENTRY"); }
 	if (sizeof(VRControllerState_t) != controllerStateSize)
 		OOVR_ABORT("Bad controller state size - was the host compiled with an older version of OpenVR?");
 
@@ -699,6 +742,7 @@ bool BaseSystem::GetControllerState(vr::TrackedDeviceIndex_t controllerDeviceInd
 bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr::TrackedDeviceIndex_t unControllerDeviceIndex,
     vr::VRControllerState_t* pControllerState, uint32_t unControllerStateSize, TrackedDevicePose_t* pTrackedDevicePose)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetControllerStateWithPose", "TRACE-ENTRY"); }
 
 	BackendManager::Instance().GetSinglePose(eOrigin, unControllerDeviceIndex, pTrackedDevicePose, ETrackingStateType::TrackingStateType_Now);
 
@@ -707,6 +751,7 @@ bool BaseSystem::GetControllerStateWithPose(ETrackingUniverseOrigin eOrigin, vr:
 
 void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceIndex, uint32_t unAxisId, unsigned short usDurationMicroSec)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::TriggerHapticPulse", "TRACE-ENTRY"); }
 	if (!oovr_global_configuration.Haptics())
 		return;
 
@@ -725,6 +770,7 @@ void BaseSystem::TriggerHapticPulse(vr::TrackedDeviceIndex_t unControllerDeviceI
 
 const char* BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetButtonIdNameFromEnum", "TRACE-ENTRY"); }
 #define BTN_CASE(err) \
 	case err:         \
 		return #err
@@ -759,6 +805,7 @@ const char* BaseSystem::GetButtonIdNameFromEnum(EVRButtonId eButtonId)
 
 const char* BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetControllerAxisTypeNameFromEnum", "TRACE-ENTRY"); }
 #define AXIS_CASE(err) \
 	case err:          \
 		return #err
@@ -782,51 +829,61 @@ const char* BaseSystem::GetControllerAxisTypeNameFromEnum(EVRControllerAxisType 
 
 bool BaseSystem::CaptureInputFocus()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::CaptureInputFocus", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 void BaseSystem::ReleaseInputFocus()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ReleaseInputFocus", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 bool BaseSystem::IsInputFocusCapturedByAnotherProcess()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::IsInputFocusCapturedByAnotherProcess", "TRACE-ENTRY"); }
 	return !IsInputAvailable();
 }
 
 uint32_t BaseSystem::DriverDebugRequest(vr::TrackedDeviceIndex_t unDeviceIndex, const char* pchRequest, char* pchResponseBuffer, uint32_t unResponseBufferSize)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::DriverDebugRequest", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 vr::EVRFirmwareError BaseSystem::PerformFirmwareUpdate(vr::TrackedDeviceIndex_t unDeviceIndex)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::PerformFirmwareUpdate", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 void BaseSystem::AcknowledgeQuit_Exiting()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::AcknowledgeQuit_Exiting", "TRACE-ENTRY"); }
 	OOVR_SOFT_ABORT("No implementation");
 }
 
 void BaseSystem::AcknowledgeQuit_UserPrompt()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::AcknowledgeQuit_UserPrompt", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 uint32_t BaseSystem::GetAppContainerFilePaths(VR_OUT_STRING() char* pchBuffer, uint32_t unBufferSize)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetAppContainerFilePaths", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 const char* BaseSystem::GetRuntimeVersion()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetRuntimeVersion", "TRACE-ENTRY"); }
 	return "1.16.8";
 }
 
 DistortionCoordinates_t BaseSystem::ComputeDistortion(EVREye eEye, float fU, float fV)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ComputeDistortion", "TRACE-ENTRY"); }
 	DistortionCoordinates_t out;
 	ComputeDistortion(eEye, fU, fV, &out);
 	return out;
@@ -834,22 +891,26 @@ DistortionCoordinates_t BaseSystem::ComputeDistortion(EVREye eEye, float fU, flo
 
 HmdMatrix44_t BaseSystem::GetProjectionMatrix(EVREye eye, float znear, float zfar, EGraphicsAPIConvention convention)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::GetProjectionMatrix", "TRACE-ENTRY"); }
 	return BackendManager::Instance().GetPrimaryHMD()->GetProjectionMatrix(eye, znear, zfar, convention);
 }
 
 void BaseSystem::PerformanceTestEnableCapture(bool bEnable)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::PerformanceTestEnableCapture", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 void BaseSystem::PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::PerformanceTestReportFidelityLevelChange", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 // Tracking origin stuff
 void BaseSystem::ResetSeatedZeroPose()
 {
+	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseSystem::ResetSeatedZeroPose", "TRACE-ENTRY"); }
 	if (BackendManager::Instance().IsGraphicsConfigured()) {
 		XrSpaceVelocity velocity{ XR_TYPE_SPACE_VELOCITY };
 		XrSpaceLocation location{ XR_TYPE_SPACE_LOCATION, &velocity, 0, {} };
