@@ -35,13 +35,30 @@ void Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_
 	subImage.swapchain = GetSwapChain();
 	subImage.imageArrayIndex = 0; // This is *not* the swapchain index
 	XrExtent2Di src = GetSrcSize();
-	CalculateViewport(nullptr, src.width, src.height, true, subImage.imageRect);
+
+	// The horizontal (and vertical) *extent* of the eye's region is already baked into the
+	// per-eye swapchain by CopyToSwapchain, so the sub-image covers the full swapchain width.
+	// However, we must still preserve the source's vertical orientation. Games with a
+	// bottom-left texture origin (e.g. Unity/OpenGL, such as SUPERHOT VR) submit bounds with
+	// vMin > vMax to request a vertical flip; games with a top-left origin (e.g. UE4/BasaultVR)
+	// submit vMin < vMax. If we always emitted an upright (positive-height) imageRect, the
+	// flipped-origin games rendered upside-down. So when the game asked for a V-flip, emit an
+	// imageRect that spans the swapchain top-to-bottom in reverse (offset.y = height,
+	// extent.height = -height), which is how the orientation is signalled to the runtime.
+	if (bounds && bounds->vMin > bounds->vMax) {
+		// uMin/uMax already applied by the per-eye swapchain crop -> use full width here.
+		vr::VRTextureBounds_t rectBounds = { 0.0f, bounds->vMin, 1.0f, bounds->vMax };
+		CalculateViewport(&rectBounds, src.width, src.height, true, subImage.imageRect);
+	} else {
+		CalculateViewport(nullptr, src.width, src.height, true, subImage.imageRect);
+	}
 
 	{
 		static thread_local int _n = 0;
 		if (_n++ < 40) {
-			OOVR_LOGF("[STEREO-DBG] Invoke eye=%d src=%dx%d imageRect off=(%d,%d) ext=%dx%d swapchain=%p",
+			OOVR_LOGF("[STEREO-DBG] Invoke eye=%d src=%dx%d vFlip=%d imageRect off=(%d,%d) ext=%dx%d swapchain=%p",
 			    eye.has_value() ? (int)*eye : -1, src.width, src.height,
+			    (bounds && bounds->vMin > bounds->vMax) ? 1 : 0,
 			    subImage.imageRect.offset.x, subImage.imageRect.offset.y,
 			    subImage.imageRect.extent.width, subImage.imageRect.extent.height,
 			    (void*)subImage.swapchain);
