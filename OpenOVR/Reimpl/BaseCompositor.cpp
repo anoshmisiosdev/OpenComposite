@@ -249,6 +249,18 @@ std::unique_ptr<Compositor> BaseCompositor::CreateCompositorAPI(const vr::Textur
 ovr_enum_t BaseCompositor::Submit(EVREye eye, const Texture_t* texture, const VRTextureBounds_t* bounds, EVRSubmitFlags submitFlags)
 {
 	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseCompositor::Submit", "TRACE-ENTRY"); }
+	{
+		static thread_local int _n = 0;
+		if (_n++ < 40) {
+			if (bounds)
+				OOVR_LOGF("[STEREO-DBG] Submit eye=%d texType=%d flags=%d bounds uMin=%f uMax=%f vMin=%f vMax=%f",
+				    (int)eye, (int)texture->eType, (int)submitFlags,
+				    bounds->uMin, bounds->uMax, bounds->vMin, bounds->vMax);
+			else
+				OOVR_LOGF("[STEREO-DBG] Submit eye=%d texType=%d flags=%d bounds=NULL",
+				    (int)eye, (int)texture->eType, (int)submitFlags);
+		}
+	}
 	if (BaseClientCore::appType == vr::VRApplication_Background) {
 		OOVR_ABORT("Error - application with type VRApplication_Background should not be submitting!");
 	}
