@@ -16,6 +16,13 @@ Texture2D shaderTexture : register(t0);
 
 SamplerState SampleType : register(s0);
 
+// xy = source UV offset (uMin, vMin); zw = source UV size (uMax-uMin, vMax-vMin).
+// zw components may be negative to flip that axis (e.g. vMin>vMax -> vertical flip).
+cbuffer SrcRect : register(b0)
+{
+	float4 srcRect;
+};
+
 struct psIn {
 	float4 pos : SV_POSITION;
 	float2 tex : TEXCOORD0;
@@ -24,9 +31,11 @@ struct psIn {
 psIn vs_fs(uint vI : SV_VERTEXID)
 {
 	psIn output;
-    output.tex = float2(vI&1,vI>>1);
-    output.pos = float4((output.tex.x-0.5f)*2,-(output.tex.y-0.5f)*2,0,1);
-	output.tex.y = 1.0f - output.tex.y;
+	float2 quad = float2(vI&1,vI>>1);
+	output.pos = float4((quad.x-0.5f)*2,-(quad.y-0.5f)*2,0,1);
+	// Map the [0,1] fullscreen quad onto the requested source sub-region. A negative srcRect.w
+	// (vMin>vMax) makes the top of the output sample the bottom of the source -> vertical flip.
+	output.tex = srcRect.xy + quad * srcRect.zw;
 	return output;
 }
 
@@ -129,6 +138,14 @@ DX11Compositor::DX11Compositor(ID3D11Texture2D* initial)
 
 	// Create the texture sampler state.
 	OOVR_FAILED_DX_ABORT(device->CreateSamplerState(&samplerDesc, &quad_sampleState));
+
+	// Constant buffer holding the source UV rect (offset + size) for the crop/flip shader.
+	D3D11_BUFFER_DESC cbDesc = {};
+	cbDesc.ByteWidth = sizeof(float) * 4;
+	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	OOVR_FAILED_DX_ABORT(device->CreateBuffer(&cbDesc, nullptr, &uvTransformCB));
 }
 
 DX11Compositor::~DX11Compositor()
@@ -142,6 +159,9 @@ DX11Compositor::~DX11Compositor()
 		tex->Release();
 
 	resolvedMSAATextures.clear();
+
+	if (uvTransformCB)
+		uvTransformCB->Release();
 
 	context->Release();
 	device->Release();
@@ -227,6 +247,7 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 
 		// Set aside the old format for checking later
 		createInfoFormat = srcDesc.Format;
+		swapchainDxgiFormat = type; // typed format used for the swapchain images and RTVs
 
 		// Make eye render buffer
 		desc = { XR_TYPE_SWAPCHAIN_CREATE_INFO };
@@ -333,13 +354,34 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 	sourceRegion.front = 0;
 	sourceRegion.back = 1;
 
-	// Bounds describe an inverted image so copy texture using pixel shader inverting on copy
-	if (bounds && bounds->vMin > bounds->vMax && oovr_global_configuration.InvertUsingShaders() && !swapchain_rtvs.empty()) {
-		auto* src = (ID3D11Texture2D*)texture->handle;
+	// The game submitted bounds requesting a vertical flip (vMin > vMax), i.e. the source has a
+	// bottom-left texture origin (Unity/OpenGL, e.g. SUPERHOT VR). A plain CopySubresourceRegion
+	// cannot flip, and a negative-height imageRect is rejected by strict runtimes
+	// (XR_ERROR_SWAPCHAIN_RECT_INVALID), so we flip (and crop the eye's sub-region) here with a
+	// shader pass, writing upright pixels into the per-eye swapchain. Only non-MSAA sources are
+	// handled this way; an MSAA flipped source would fall through to the resolve/copy path.
+	if (bounds && bounds->vMin > bounds->vMax && srcDesc.SampleDesc.Count == 1 && !swapchain_rtvs.empty()) {
+		// Create an SRV with an explicit typed format (the source is often TYPELESS, which cannot
+		// use a null SRV desc). Matching the swapchain's format makes the sample->store a colour
+		// identity, mirroring the raw byte copy that CopySubresourceRegion would have done.
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = swapchainDxgiFormat;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MostDetailedMip = 0;
+		srvDesc.Texture2D.MipLevels = 1;
+		OOVR_FAILED_DX_ABORT(device->CreateShaderResourceView(src, &srvDesc, &quad_texture_view));
 
-		OOVR_FAILED_DX_ABORT(device->CreateShaderResourceView(src, nullptr, &quad_texture_view));
+		// Upload the source sub-region rect (normalised). A negative height (vMax-vMin < 0)
+		// makes the shader sample bottom-to-top -> vertical flip. uMin/uMax select the eye's half.
+		float uvData[4] = {
+			bounds->uMin, bounds->vMin,
+			bounds->uMax - bounds->uMin, bounds->vMax - bounds->vMin
+		};
+		D3D11_MAPPED_SUBRESOURCE mapped;
+		OOVR_FAILED_DX_ABORT(context->Map(uvTransformCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
+		memcpy(mapped.pData, uvData, sizeof(uvData));
+		context->Unmap(uvTransformCB, 0);
 
-		float blend_factor[4] = { 1.f, 1.f, 1.f, 1.f };
 		context->OMSetBlendState(nullptr, nullptr, 0xffffffff);
 
 		UINT numViewPorts;
@@ -358,12 +400,9 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 		context->RSGetState(&pRSState);
 		context->RSSetState(nullptr);
 
-		// mingw-w64's d3d11.h lacks the CD3D11_VIEWPORT helper; build the
-		// equivalent full-texture viewport by hand (same as CD3D11_VIEWPORT
-		// constructed from a Texture2D and its render target view).
-		D3D11_TEXTURE2D_DESC vpTexDesc;
-		src->GetDesc(&vpTexDesc);
-		D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)vpTexDesc.Width, (FLOAT)vpTexDesc.Height,
+		// The draw fills the whole per-eye swapchain image; the shader remaps the fullscreen quad
+		// onto the requested source sub-region, so the viewport is the swapchain (destination) size.
+		D3D11_VIEWPORT viewport = { 0.0f, 0.0f, (FLOAT)createInfo.width, (FLOAT)createInfo.height,
 			0.0f, 1.0f }; // MinDepth/MaxDepth (D3D11_MIN_DEPTH/D3D11_MAX_DEPTH)
 		context->RSSetViewports(1, &viewport);
 		D3D11_RECT rects[1];
@@ -380,9 +419,11 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 
 		// Set the active shaders and constant buffers.
 		context->PSSetShaderResources(0, 1, &quad_texture_view);
+		context->VSSetConstantBuffers(0, 1, &uvTransformCB);
 		context->VSSetShader(fs_vshader, nullptr, 0);
 		context->PSSetShader(fs_pshader, nullptr, 0);
 		context->PSSetSamplers(0, 1, &quad_sampleState);
+		context->IASetInputLayout(nullptr);
 
 		// Set up the mesh's information
 		D3D11_PRIMITIVE_TOPOLOGY currTopology;
@@ -390,7 +431,14 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 		context->Draw(4, 0);
 		context->IASetPrimitiveTopology(currTopology);
+
+		// Unbind our resources so we don't leave the swapchain RTV / SRV bound on the game's context.
+		ID3D11RenderTargetView* nullRTV = nullptr;
+		context->OMSetRenderTargets(1, &nullRTV, nullptr);
+		ID3D11ShaderResourceView* nullSRV = nullptr;
+		context->PSSetShaderResources(0, 1, &nullSRV);
 		quad_texture_view->Release();
+		quad_texture_view = nullptr;
 
 		if (numViewPorts)
 			context->RSSetViewports(numViewPorts, viewports.data());
@@ -398,6 +446,8 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 			context->RSSetScissorRects(numScissors, scissors.data());
 
 		context->RSSetState(pRSState);
+		if (pRSState)
+			pRSState->Release();
 	} else {
 		// Apparently SteamVR supports apps just sending array textures without specifying what's what.
 		const int arrayIndex = (srcDesc.ArraySize > 1 && eye.has_value()) ? static_cast<int>(*eye) : 0;

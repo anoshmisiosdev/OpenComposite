@@ -30,6 +30,8 @@ protected:
 	ID3D11SamplerState* quad_sampleState;
 	ID3D11VertexShader* fs_vshader;
 	ID3D11PixelShader* fs_pshader;
+	ID3D11Buffer* uvTransformCB = nullptr; // float4: xy = uv offset, zw = uv size (zw may be negative to flip)
+	DXGI_FORMAT swapchainDxgiFormat = DXGI_FORMAT_UNKNOWN; // the (typed) format the swapchain/RTV use
 
 	std::vector<XrSwapchainImageD3D11KHR> imagesHandles;
 	std::vector<ID3D11RenderTargetView*> swapchain_rtvs;
