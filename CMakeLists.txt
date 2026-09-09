@@ -193,7 +193,7 @@ if (NOT OpenXR_FOUND OR NOT jsoncpp_FOUND)
 	target_include_directories(OpenXR PUBLIC ${XrDir}/include)
 	# Platform-dependent flags
 	if (WIN32)
-		target_link_libraries(OpenXR PUBLIC advapi32 pathcch OpenGL32)
+		target_link_libraries(OpenXR PUBLIC advapi32 pathcch opengl32) # lowercase: mingw ships libopengl32.a (case-sensitive on Linux)
 	else()
 		target_link_libraries(OpenXR PUBLIC -ldl)
 	endif()
