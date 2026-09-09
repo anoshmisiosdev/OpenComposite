@@ -41,9 +41,14 @@ jobs:
 
       - name: Configure (CMake + Ninja, cross to win64)
         run: |
+          # -I ci/compat supplies case-forwarding shims for the mixed-case Windows
+          # headers (Windows.h, PathCch.h, ...) that only resolve on case-insensitive
+          # macOS; the runner filesystem is case-sensitive. See ci/compat/README.md.
           cmake -B build -G Ninja \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/ci/x86_64-w64-mingw32.cmake" \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_FLAGS="-I$PWD/ci/compat" \
+            -DCMAKE_C_FLAGS="-I$PWD/ci/compat"
 
       - name: Build
         run: cmake --build build --parallel
