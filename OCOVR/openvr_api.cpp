@@ -138,11 +138,8 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 		OOVR_ABORT("Illegal interface for apptype - see log");
 	}
 
-	OOVR_LOGF("TRACE-INTERFACE requested=%s", interfaceVersion);
 	CVRCorrectLayout* impl = (CVRCorrectLayout*)CreateInterfaceByName(interfaceVersion);
 	if (impl) {
-		void* vtbl = *reinterpret_cast<void**>(impl);
-		OOVR_LOGF("TRACE-INTERFACE-PTR %s this=%p vtable=%p", interfaceVersion, (void*)impl, vtbl);
 		correct_layout_unique ptr(impl, [](CVRCorrectLayout* cl) {
 			cl->Delete();
 		});

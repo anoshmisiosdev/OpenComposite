@@ -90,7 +90,6 @@ BaseOverlay::~BaseOverlay()
 
 int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompositionLayerBaseHeader const* const*& layers)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::_BuildLayers", "TRACE-ENTRY"); }
 	// Note that at least on MSVC, this shouldn't be doing any memory allocations
 	//  unless the list is expanding from new layers.
 	layerHeaders.clear();
@@ -159,7 +158,6 @@ int BaseOverlay::_BuildLayers(XrCompositionLayerBaseHeader* sceneLayer, XrCompos
 
 bool BaseOverlay::_HandleOverlayInput(EVREye side, TrackedDeviceIndex_t index, VRControllerState_t state)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::_HandleOverlayInput", "TRACE-ENTRY"); }
 	if (!usingInput)
 		return true;
 
@@ -174,7 +172,6 @@ bool BaseOverlay::_HandleOverlayInput(EVREye side, TrackedDeviceIndex_t index, V
 
 EVROverlayError BaseOverlay::FindOverlay(const char* pchOverlayKey, VROverlayHandle_t* pOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::FindOverlay", "TRACE-ENTRY"); }
 	if (overlays.count(pchOverlayKey)) {
 		OVL = overlays[pchOverlayKey];
 		return VROverlayError_None;
@@ -185,7 +182,6 @@ EVROverlayError BaseOverlay::FindOverlay(const char* pchOverlayKey, VROverlayHan
 }
 EVROverlayError BaseOverlay::CreateOverlay(const char* pchOverlayKey, const char* pchOverlayName, VROverlayHandle_t* pOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::CreateOverlay", "TRACE-ENTRY"); }
 	if (overlays.count(pchOverlayKey)) {
 		return VROverlayError_KeyInUse;
 	}
@@ -208,7 +204,6 @@ EVROverlayError BaseOverlay::CreateOverlay(const char* pchOverlayKey, const char
 }
 EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::DestroyOverlay", "TRACE-ENTRY"); }
 	USEH();
 
 	if (highQualityOverlay == ulOverlayHandle)
@@ -226,7 +221,6 @@ EVROverlayError BaseOverlay::DestroyOverlay(VROverlayHandle_t ulOverlayHandle)
 }
 EVROverlayError BaseOverlay::SetHighQualityOverlay(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetHighQualityOverlay", "TRACE-ENTRY"); }
 	USEH();
 
 	highQualityOverlay = ulOverlayHandle;
@@ -235,7 +229,6 @@ EVROverlayError BaseOverlay::SetHighQualityOverlay(VROverlayHandle_t ulOverlayHa
 }
 VROverlayHandle_t BaseOverlay::GetHighQualityOverlay()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetHighQualityOverlay", "TRACE-ENTRY"); }
 	if (!highQualityOverlay)
 		return k_ulOverlayHandleInvalid;
 
@@ -243,7 +236,6 @@ VROverlayHandle_t BaseOverlay::GetHighQualityOverlay()
 }
 uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char* pchValue, uint32_t unBufferSize, EVROverlayError* pError)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayKey", "TRACE-ENTRY"); }
 	OverlayData* overlay = (OverlayData*)ulOverlayHandle;
 	if (!overlays.count(overlay->key)) {
 		if (pError)
@@ -269,7 +261,6 @@ uint32_t BaseOverlay::GetOverlayKey(VROverlayHandle_t ulOverlayHandle, char* pch
 }
 uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char* pchValue, uint32_t unBufferSize, EVROverlayError* pError)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayName", "TRACE-ENTRY"); }
 	if (pError)
 		*pError = VROverlayError_None;
 
@@ -295,7 +286,6 @@ uint32_t BaseOverlay::GetOverlayName(VROverlayHandle_t ulOverlayHandle, VR_OUT_S
 }
 EVROverlayError BaseOverlay::SetOverlayName(VROverlayHandle_t ulOverlayHandle, const char* pchName)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayName", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->name = pchName;
@@ -304,12 +294,10 @@ EVROverlayError BaseOverlay::SetOverlayName(VROverlayHandle_t ulOverlayHandle, c
 }
 EVROverlayError BaseOverlay::GetOverlayImageData(VROverlayHandle_t ulOverlayHandle, void* pvBuffer, uint32_t unBufferSize, uint32_t* punWidth, uint32_t* punHeight)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayImageData", "TRACE-ENTRY"); }
 	STUBBED();
 }
 const char* BaseOverlay::GetOverlayErrorNameFromEnum(EVROverlayError error)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayErrorNameFromEnum", "TRACE-ENTRY"); }
 #define ERR_CASE(name)          \
 	case VROverlayError_##name: \
 		return #name;
@@ -349,17 +337,14 @@ const char* BaseOverlay::GetOverlayErrorNameFromEnum(EVROverlayError error)
 }
 EVROverlayError BaseOverlay::SetOverlayRenderingPid(VROverlayHandle_t ulOverlayHandle, uint32_t unPID)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayRenderingPid", "TRACE-ENTRY"); }
 	STUBBED();
 }
 uint32_t BaseOverlay::GetOverlayRenderingPid(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayRenderingPid", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayFlag(VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayFlag", "TRACE-ENTRY"); }
 	USEH();
 
 	if (bEnabled) {
@@ -372,7 +357,6 @@ EVROverlayError BaseOverlay::SetOverlayFlag(VROverlayHandle_t ulOverlayHandle, V
 }
 EVROverlayError BaseOverlay::GetOverlayFlag(VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool* pbEnabled)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayFlag", "TRACE-ENTRY"); }
 	USEH();
 
 	*pbEnabled = (overlay->flags & (1uLL << eOverlayFlag)) != 0uLL;
@@ -381,7 +365,6 @@ EVROverlayError BaseOverlay::GetOverlayFlag(VROverlayHandle_t ulOverlayHandle, V
 }
 EVROverlayError BaseOverlay::SetOverlayColor(VROverlayHandle_t ulOverlayHandle, float fRed, float fGreen, float fBlue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayColor", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->colour.r = fRed;
@@ -392,7 +375,6 @@ EVROverlayError BaseOverlay::SetOverlayColor(VROverlayHandle_t ulOverlayHandle, 
 }
 EVROverlayError BaseOverlay::GetOverlayColor(VROverlayHandle_t ulOverlayHandle, float* pfRed, float* pfGreen, float* pfBlue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayColor", "TRACE-ENTRY"); }
 	USEH();
 
 	*pfRed = overlay->colour.r;
@@ -403,7 +385,6 @@ EVROverlayError BaseOverlay::GetOverlayColor(VROverlayHandle_t ulOverlayHandle, 
 }
 EVROverlayError BaseOverlay::SetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, float fAlpha)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayAlpha", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->colour.a = fAlpha;
@@ -412,7 +393,6 @@ EVROverlayError BaseOverlay::SetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, 
 }
 EVROverlayError BaseOverlay::GetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, float* pfAlpha)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayAlpha", "TRACE-ENTRY"); }
 	USEH();
 
 	*pfAlpha = overlay->colour.a;
@@ -421,7 +401,6 @@ EVROverlayError BaseOverlay::GetOverlayAlpha(VROverlayHandle_t ulOverlayHandle, 
 }
 EVROverlayError BaseOverlay::SetOverlayTexelAspect(VROverlayHandle_t ulOverlayHandle, float fTexelAspect)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTexelAspect", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->texelAspect = fTexelAspect;
@@ -430,7 +409,6 @@ EVROverlayError BaseOverlay::SetOverlayTexelAspect(VROverlayHandle_t ulOverlayHa
 }
 EVROverlayError BaseOverlay::GetOverlayTexelAspect(VROverlayHandle_t ulOverlayHandle, float* pfTexelAspect)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTexelAspect", "TRACE-ENTRY"); }
 	USEH();
 
 	if (!pfTexelAspect)
@@ -442,18 +420,15 @@ EVROverlayError BaseOverlay::GetOverlayTexelAspect(VROverlayHandle_t ulOverlayHa
 }
 EVROverlayError BaseOverlay::SetOverlaySortOrder(VROverlayHandle_t ulOverlayHandle, uint32_t unSortOrder)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlaySortOrder", "TRACE-ENTRY"); }
 	// TODO
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::GetOverlaySortOrder(VROverlayHandle_t ulOverlayHandle, uint32_t* punSortOrder)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlaySortOrder", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayWidthInMeters(VROverlayHandle_t ulOverlayHandle, float fWidthInMeters)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayWidthInMeters", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->widthMeters = fWidthInMeters;
@@ -462,7 +437,6 @@ EVROverlayError BaseOverlay::SetOverlayWidthInMeters(VROverlayHandle_t ulOverlay
 }
 EVROverlayError BaseOverlay::GetOverlayWidthInMeters(VROverlayHandle_t ulOverlayHandle, float* pfWidthInMeters)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayWidthInMeters", "TRACE-ENTRY"); }
 	USEH();
 
 	*pfWidthInMeters = overlay->widthMeters;
@@ -471,17 +445,14 @@ EVROverlayError BaseOverlay::GetOverlayWidthInMeters(VROverlayHandle_t ulOverlay
 }
 EVROverlayError BaseOverlay::SetOverlayCurvature(VROverlayHandle_t ulOverlayHandle, float fCurvature)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayCurvature", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayCurvature(VROverlayHandle_t ulOverlayHandle, float* pfCurvature)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayCurvature", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayAutoCurveDistanceRangeInMeters(VROverlayHandle_t ulOverlayHandle, float fMinDistanceInMeters, float fMaxDistanceInMeters)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayAutoCurveDistanceRangeInMeters", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->autoCurveDistanceRangeMin = fMinDistanceInMeters;
@@ -491,7 +462,6 @@ EVROverlayError BaseOverlay::SetOverlayAutoCurveDistanceRangeInMeters(VROverlayH
 }
 EVROverlayError BaseOverlay::GetOverlayAutoCurveDistanceRangeInMeters(VROverlayHandle_t ulOverlayHandle, float* pfMinDistanceInMeters, float* pfMaxDistanceInMeters)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayAutoCurveDistanceRangeInMeters", "TRACE-ENTRY"); }
 	USEH();
 
 	*pfMinDistanceInMeters = overlay->autoCurveDistanceRangeMin;
@@ -501,7 +471,6 @@ EVROverlayError BaseOverlay::GetOverlayAutoCurveDistanceRangeInMeters(VROverlayH
 }
 EVROverlayError BaseOverlay::SetOverlayTextureColorSpace(VROverlayHandle_t ulOverlayHandle, EColorSpace eTextureColorSpace)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTextureColorSpace", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->colourSpace = eTextureColorSpace;
@@ -510,7 +479,6 @@ EVROverlayError BaseOverlay::SetOverlayTextureColorSpace(VROverlayHandle_t ulOve
 }
 EVROverlayError BaseOverlay::GetOverlayTextureColorSpace(VROverlayHandle_t ulOverlayHandle, EColorSpace* peTextureColorSpace)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTextureColorSpace", "TRACE-ENTRY"); }
 	USEH();
 
 	*peTextureColorSpace = overlay->colourSpace;
@@ -519,7 +487,6 @@ EVROverlayError BaseOverlay::GetOverlayTextureColorSpace(VROverlayHandle_t ulOve
 }
 EVROverlayError BaseOverlay::SetOverlayTextureBounds(VROverlayHandle_t ulOverlayHandle, const VRTextureBounds_t* pOverlayTextureBounds)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTextureBounds", "TRACE-ENTRY"); }
 	USEH();
 
 	if (pOverlayTextureBounds)
@@ -531,7 +498,6 @@ EVROverlayError BaseOverlay::SetOverlayTextureBounds(VROverlayHandle_t ulOverlay
 }
 EVROverlayError BaseOverlay::GetOverlayTextureBounds(VROverlayHandle_t ulOverlayHandle, VRTextureBounds_t* pOverlayTextureBounds)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTextureBounds", "TRACE-ENTRY"); }
 	USEH();
 
 	*pOverlayTextureBounds = overlay->textureBounds;
@@ -540,7 +506,6 @@ EVROverlayError BaseOverlay::GetOverlayTextureBounds(VROverlayHandle_t ulOverlay
 }
 uint32_t BaseOverlay::GetOverlayRenderModel(VROverlayHandle_t ulOverlayHandle, char* pchValue, uint32_t unBufferSize, HmdColor_t* pColor, EVROverlayError* pError)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayRenderModel", "TRACE-ENTRY"); }
 	if (pError)
 		*pError = VROverlayError_None;
 
@@ -548,12 +513,10 @@ uint32_t BaseOverlay::GetOverlayRenderModel(VROverlayHandle_t ulOverlayHandle, c
 }
 EVROverlayError BaseOverlay::SetOverlayRenderModel(VROverlayHandle_t ulOverlayHandle, const char* pchRenderModel, const HmdColor_t* pColor)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayRenderModel", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTransformType(VROverlayHandle_t ulOverlayHandle, VROverlayTransformType* peTransformType)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTransformType", "TRACE-ENTRY"); }
 	USEH();
 
 	*peTransformType = overlay->transformType;
@@ -562,7 +525,6 @@ EVROverlayError BaseOverlay::GetOverlayTransformType(VROverlayHandle_t ulOverlay
 }
 EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t* pmatTrackingOriginToOverlayTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTransformAbsolute", "TRACE-ENTRY"); }
 	USEH();
 
 	// TODO account for the universe origin, and if it doesn't match that currently in use then add or
@@ -576,7 +538,6 @@ EVROverlayError BaseOverlay::SetOverlayTransformAbsolute(VROverlayHandle_t ulOve
 }
 EVROverlayError BaseOverlay::GetOverlayTransformAbsolute(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin* peTrackingOrigin, HmdMatrix34_t* pmatTrackingOriginToOverlayTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTransformAbsolute", "TRACE-ENTRY"); }
 	USEH();
 
 	if (overlay->transformType != VROverlayTransform_Absolute)
@@ -588,7 +549,6 @@ EVROverlayError BaseOverlay::GetOverlayTransformAbsolute(VROverlayHandle_t ulOve
 }
 EVROverlayError BaseOverlay::SetOverlayTransformTrackedDeviceRelative(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unTrackedDevice, const HmdMatrix34_t* pmatTrackedDeviceToOverlayTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTransformTrackedDeviceRelative", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->transformType = VROverlayTransform_TrackedDeviceRelative;
@@ -599,75 +559,62 @@ EVROverlayError BaseOverlay::SetOverlayTransformTrackedDeviceRelative(VROverlayH
 }
 EVROverlayError BaseOverlay::GetOverlayTransformTrackedDeviceRelative(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t* punTrackedDevice, HmdMatrix34_t* pmatTrackedDeviceToOverlayTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTransformTrackedDeviceRelative", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformTrackedDeviceComponent(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unDeviceIndex, const char* pchComponentName)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTransformTrackedDeviceComponent", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTransformTrackedDeviceComponent(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t* punDeviceIndex, char* pchComponentName, uint32_t unComponentNameSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTransformTrackedDeviceComponent", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTransformOverlayRelative(VROverlayHandle_t ulOverlayHandle, VROverlayHandle_t* ulOverlayHandleParent, HmdMatrix34_t* pmatParentOverlayToOverlayTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTransformOverlayRelative", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformOverlayRelative(VROverlayHandle_t ulOverlayHandle, VROverlayHandle_t ulOverlayHandleParent, const HmdMatrix34_t* pmatParentOverlayToOverlayTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTransformOverlayRelative", "TRACE-ENTRY"); }
 	// TODO
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::SetOverlayTransformCursor(VROverlayHandle_t ulCursorOverlayHandle, const HmdVector2_t* pvHotspot)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTransformCursor", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTransformCursor(VROverlayHandle_t ulOverlayHandle, HmdVector2_t* pvHotspot)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTransformCursor", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTransformProjection(VROverlayHandle_t ulOverlayHandle,
     ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t* pmatTrackingOriginToOverlayTransform,
     const OOVR_VROverlayProjection_t* pProjection, EVREye eEye)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTransformProjection", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::ShowOverlay(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowOverlay", "TRACE-ENTRY"); }
 	USEH();
 	overlay->visible = true;
 	return VROverlayError_None;
 }
 EVROverlayError BaseOverlay::HideOverlay(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::HideOverlay", "TRACE-ENTRY"); }
 	USEH();
 	overlay->visible = false;
 	return VROverlayError_None;
 }
 bool BaseOverlay::IsOverlayVisible(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::IsOverlayVisible", "TRACE-ENTRY"); }
 	USEHB();
 	return overlay->visible;
 }
 EVROverlayError BaseOverlay::GetTransformForOverlayCoordinates(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, HmdMatrix34_t* pmatTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetTransformForOverlayCoordinates", "TRACE-ENTRY"); }
 	STUBBED();
 }
 bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREvent_t* pEvent, uint32_t eventSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::PollNextOverlayEvent", "TRACE-ENTRY"); }
 	USEHB();
 
 	memset(pEvent, 0, eventSize);
@@ -684,7 +631,6 @@ bool BaseOverlay::PollNextOverlayEvent(VROverlayHandle_t ulOverlayHandle, VREven
 }
 EVROverlayError BaseOverlay::GetOverlayInputMethod(VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod* peInputMethod)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayInputMethod", "TRACE-ENTRY"); }
 	USEH();
 
 	if (peInputMethod)
@@ -695,7 +641,6 @@ EVROverlayError BaseOverlay::GetOverlayInputMethod(VROverlayHandle_t ulOverlayHa
 
 EVROverlayError BaseOverlay::SetOverlayInputMethod(VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod eInputMethod)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayInputMethod", "TRACE-ENTRY"); }
 	USEH();
 
 	overlay->inputMethod = eInputMethod;
@@ -704,7 +649,6 @@ EVROverlayError BaseOverlay::SetOverlayInputMethod(VROverlayHandle_t ulOverlayHa
 }
 EVROverlayError BaseOverlay::GetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, HmdVector2_t* pvecMouseScale)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayMouseScale", "TRACE-ENTRY"); }
 	USEH();
 
 	*pvecMouseScale = overlay->mouseScale;
@@ -713,7 +657,6 @@ EVROverlayError BaseOverlay::GetOverlayMouseScale(VROverlayHandle_t ulOverlayHan
 }
 EVROverlayError BaseOverlay::SetOverlayMouseScale(VROverlayHandle_t ulOverlayHandle, const HmdVector2_t* pvecMouseScale)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayMouseScale", "TRACE-ENTRY"); }
 	USEH();
 
 	if (pvecMouseScale)
@@ -725,77 +668,62 @@ EVROverlayError BaseOverlay::SetOverlayMouseScale(VROverlayHandle_t ulOverlayHan
 }
 bool BaseOverlay::ComputeOverlayIntersection(VROverlayHandle_t ulOverlayHandle, const OOVR_VROverlayIntersectionParams_t* pParams, OOVR_VROverlayIntersectionResults_t* pResults)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ComputeOverlayIntersection", "TRACE-ENTRY"); }
 	STUBBED();
 }
 bool BaseOverlay::HandleControllerOverlayInteractionAsMouse(VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unControllerDeviceIndex)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::HandleControllerOverlayInteractionAsMouse", "TRACE-ENTRY"); }
 	STUBBED();
 }
 bool BaseOverlay::IsHoverTargetOverlay(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::IsHoverTargetOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 VROverlayHandle_t BaseOverlay::GetGamepadFocusOverlay()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetGamepadFocusOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetGamepadFocusOverlay(VROverlayHandle_t ulNewFocusOverlay)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetGamepadFocusOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayNeighbor(EOverlayDirection eDirection, VROverlayHandle_t ulFrom, VROverlayHandle_t ulTo)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayNeighbor", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::MoveGamepadFocusToNeighbor(EOverlayDirection eDirection, VROverlayHandle_t ulFrom)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::MoveGamepadFocusToNeighbor", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t& vCenter, float fRadius)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayDualAnalogTransform", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, HmdVector2_t* pvCenter, float* pfRadius)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayDualAnalogTransform", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayDualAnalogTransform(VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t* pvCenter, float fRadius)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayDualAnalogTransform", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::TriggerLaserMouseHapticVibration(VROverlayHandle_t ulOverlayHandle, float fDurationSeconds, float fFrequency, float fAmplitude)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::TriggerLaserMouseHapticVibration", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayCursor(VROverlayHandle_t ulOverlayHandle, VROverlayHandle_t ulCursorHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayCursor", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayCursorPositionOverride(VROverlayHandle_t ulOverlayHandle, const HmdVector2_t* pvCursor)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayCursorPositionOverride", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::ClearOverlayCursorPositionOverride(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ClearOverlayCursorPositionOverride", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle, const Texture_t* pTexture)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayTexture", "TRACE-ENTRY"); }
 	USEH();
 	overlay->texture = *pTexture;
 
@@ -822,7 +750,6 @@ EVROverlayError BaseOverlay::SetOverlayTexture(VROverlayHandle_t ulOverlayHandle
 }
 EVROverlayError BaseOverlay::ClearOverlayTexture(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ClearOverlayTexture", "TRACE-ENTRY"); }
 	USEH();
 	overlay->texture = {};
 
@@ -835,71 +762,58 @@ EVROverlayError BaseOverlay::ClearOverlayTexture(VROverlayHandle_t ulOverlayHand
 }
 EVROverlayError BaseOverlay::SetOverlayRaw(VROverlayHandle_t ulOverlayHandle, void* pvBuffer, uint32_t unWidth, uint32_t unHeight, uint32_t unDepth)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayRaw", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayFromFile(VROverlayHandle_t ulOverlayHandle, const char* pchFilePath)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayFromFile", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTexture(VROverlayHandle_t ulOverlayHandle, void** pNativeTextureHandle, void* pNativeTextureRef, uint32_t* pWidth, uint32_t* pHeight, uint32_t* pNativeFormat, ETextureType* pAPIType, EColorSpace* pColorSpace, VRTextureBounds_t* pTextureBounds)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTexture", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::ReleaseNativeOverlayHandle(VROverlayHandle_t ulOverlayHandle, void* pNativeTextureHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ReleaseNativeOverlayHandle", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayTextureSize(VROverlayHandle_t ulOverlayHandle, uint32_t* pWidth, uint32_t* pHeight)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayTextureSize", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::CreateDashboardOverlay(const char* pchOverlayKey, const char* pchOverlayFriendlyName, VROverlayHandle_t* pMainHandle, VROverlayHandle_t* pThumbnailHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::CreateDashboardOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 bool BaseOverlay::IsDashboardVisible()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::IsDashboardVisible", "TRACE-ENTRY"); }
 	// TODO should this be based of whether Dash is open?
 	// Probably, but handling focus opens some other issues as it triggers under other conditions.
 	return false;
 }
 bool BaseOverlay::IsActiveDashboardOverlay(VROverlayHandle_t ulOverlayHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::IsActiveDashboardOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetDashboardOverlaySceneProcess(VROverlayHandle_t ulOverlayHandle, uint32_t unProcessId)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetDashboardOverlaySceneProcess", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetDashboardOverlaySceneProcess(VROverlayHandle_t ulOverlayHandle, uint32_t* punProcessId)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetDashboardOverlaySceneProcess", "TRACE-ENTRY"); }
 	STUBBED();
 }
 void BaseOverlay::ShowDashboard(const char* pchOverlayToShow)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowDashboard", "TRACE-ENTRY"); }
 	STUBBED();
 }
 TrackedDeviceIndex_t BaseOverlay::GetPrimaryDashboardDevice()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetPrimaryDashboardDevice", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, bool bUseMinimalMode, uint64_t uUserValue,
     VRKeyboard::eventDispatch_t eventDispatch)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowKeyboardWithDispatch", "TRACE-ENTRY"); }
 	// Submit a KeyboardDone event since the actual keyboard is not implemented yet.  This allows certain games to still proceed instead of crash.
 	SubmitPlaceholderKeyboardEvent(VREvent_KeyboardDone, eventDispatch, uUserValue);
 
@@ -928,7 +842,6 @@ EVROverlayError BaseOverlay::ShowKeyboardWithDispatch(EGamepadTextInputMode eInp
 /** Placeholder method for submitting a KeyboardDone event when asked to show the keyboard since it is not implemented yet. **/
 void BaseOverlay::SubmitPlaceholderKeyboardEvent(vr::EVREventType ev, VRKeyboard::eventDispatch_t eventDispatch, uint64_t userValue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SubmitPlaceholderKeyboardEvent", "TRACE-ENTRY"); }
 	VREvent_Keyboard_t data{};
 	data.uUserValue = userValue;
 
@@ -943,7 +856,6 @@ void BaseOverlay::SubmitPlaceholderKeyboardEvent(vr::EVREventType ev, VRKeyboard
 EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode,
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, bool bUseMinimalMode, uint64_t uUserValue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowKeyboard", "TRACE-ENTRY"); }
 
 	VRKeyboard::eventDispatch_t dispatch = [](VREvent_t ev) {
 		BaseSystem* sys = GetUnsafeBaseSystem();
@@ -957,7 +869,6 @@ EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGam
 EVROverlayError BaseOverlay::ShowKeyboard(EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, uint32_t unFlags,
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText, uint64_t uUserValue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowKeyboard", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayHandle,
@@ -965,7 +876,6 @@ EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayH
     const char* pchDescription, uint32_t unCharMax, const char* pchExistingText,
     bool bUseMinimalMode, uint64_t uUserValue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowKeyboardForOverlay", "TRACE-ENTRY"); }
 
 	USEH();
 
@@ -979,12 +889,10 @@ EVROverlayError BaseOverlay::ShowKeyboardForOverlay(VROverlayHandle_t ulOverlayH
     EGamepadTextInputLineMode eLineInputMode, uint32_t unFlags, const char* pchDescription, uint32_t unCharMax,
     const char* pchExistingText, uint64_t uUserValue)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowKeyboardForOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 uint32_t BaseOverlay::GetKeyboardText(char* pchText, uint32_t cchText)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetKeyboardText", "TRACE-ENTRY"); }
 	string str = keyboard ? VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents()) : keyboardCache;
 
 	// Since keyboard is not functional yet, return this default text (Adventurer because this fix was made specifically for Skyrim VR)
@@ -1001,7 +909,6 @@ uint32_t BaseOverlay::GetKeyboardText(char* pchText, uint32_t cchText)
 }
 void BaseOverlay::HideKeyboard()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::HideKeyboard", "TRACE-ENTRY"); }
 	// First, if the keyboard is currently open, cache it's contents
 	if (keyboard) {
 		keyboardCache = VRKeyboard::CHAR_CONV.to_bytes(keyboard->contents());
@@ -1017,7 +924,6 @@ void BaseOverlay::HideKeyboard()
 }
 void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t* pmatTrackingOriginToKeyboardTransform)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetKeyboardTransformAbsolute", "TRACE-ENTRY"); }
 	if (!keyboard)
 		OOVR_ABORT("Cannot set keyboard position when the keyboard is closed!");
 
@@ -1034,44 +940,36 @@ void BaseOverlay::SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTracking
 }
 void BaseOverlay::SetKeyboardPositionForOverlay(VROverlayHandle_t ulOverlayHandle, HmdRect2_t avoidRect)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetKeyboardPositionForOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::SetOverlayIntersectionMask(VROverlayHandle_t ulOverlayHandle, OOVR_VROverlayIntersectionMaskPrimitive_t* pMaskPrimitives, uint32_t unNumMaskPrimitives, uint32_t unPrimitiveSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayIntersectionMask", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVROverlayError BaseOverlay::GetOverlayFlags(VROverlayHandle_t ulOverlayHandle, uint32_t* pFlags)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayFlags", "TRACE-ENTRY"); }
 	STUBBED();
 }
 BaseOverlay::VRMessageOverlayResponse BaseOverlay::ShowMessageOverlay(const char* pchText, const char* pchCaption, const char* pchButton0Text, const char* pchButton1Text, const char* pchButton2Text, const char* pchButton3Text)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::ShowMessageOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 void BaseOverlay::CloseMessageOverlay()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::CloseMessageOverlay", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 EVROverlayError BaseOverlay::SetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float fRadians)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::SetOverlayPreCurvePitch", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 EVROverlayError BaseOverlay::GetOverlayPreCurvePitch(vr::VROverlayHandle_t ulOverlayHandle, float* pfRadians)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::GetOverlayPreCurvePitch", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 EVROverlayError BaseOverlay::WaitFrameSync(uint32_t nTimeoutMs)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseOverlay::WaitFrameSync", "TRACE-ENTRY"); }
 	STUBBED();
 }

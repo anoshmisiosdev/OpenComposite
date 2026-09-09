@@ -313,13 +313,6 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 		return;
 	}
 
-	{
-		static thread_local int _n = 0;
-		if (_n++ < 20)
-			OOVR_LOGF("[STEREO-DBG] DX11 CopyToSwapchain srcW=%d srcH=%d arraySize=%d samples=%d bounds=%s eye=%d",
-			    srcDesc.Width, srcDesc.Height, srcDesc.ArraySize, srcDesc.SampleDesc.Count,
-			    bounds ? "yes" : "null", eye.has_value() ? (int)*eye : -1);
-	}
 
 	CheckCreateSwapChain(texture, bounds, false);
 

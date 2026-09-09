@@ -45,17 +45,6 @@ void Compositor::Invoke(const vr::Texture_t* texture, const vr::VRTextureBounds_
 	// frame, so the flip has to be applied to the pixels instead.
 	CalculateViewport(nullptr, src.width, src.height, true, subImage.imageRect);
 
-	{
-		static thread_local int _n = 0;
-		if (_n++ < 40) {
-			OOVR_LOGF("[STEREO-DBG] Invoke eye=%d src=%dx%d vFlip=%d imageRect off=(%d,%d) ext=%dx%d swapchain=%p",
-			    eye.has_value() ? (int)*eye : -1, src.width, src.height,
-			    (bounds && bounds->vMin > bounds->vMax) ? 1 : 0,
-			    subImage.imageRect.offset.x, subImage.imageRect.offset.y,
-			    subImage.imageRect.extent.width, subImage.imageRect.extent.height,
-			    (void*)subImage.swapchain);
-		}
-	}
 }
 
 bool Compositor::CalculateViewport(const vr::VRTextureBounds_t* ptrBounds, int32_t width, int32_t height, bool supportsInvert, XrRect2Di& viewport)

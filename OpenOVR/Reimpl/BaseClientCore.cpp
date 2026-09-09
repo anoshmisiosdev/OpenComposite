@@ -58,7 +58,6 @@ enum Runtime {
 
 bool BaseClientCore::CheckAppEnabled()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::CheckAppEnabled", "TRACE-ENTRY"); }
 #ifndef _WIN32
 	OOVR_LOG_ONCE("Launcher configuration not yet supported on Linux");
 	return true;
@@ -198,7 +197,6 @@ static wstring GetOpenVRConfigPath()
 
 string BaseClientCore::GetAlternativeRuntimePath()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::GetAlternativeRuntimePath", "TRACE-ENTRY"); }
 	wstring regPath = GetOpenVRConfigPath();
 
 #if defined(_WIN32) || defined(__unix__)
@@ -228,7 +226,6 @@ string BaseClientCore::GetAlternativeRuntimePath()
 
 EVRInitError BaseClientCore::Init(vr::EVRApplicationType eApplicationType, const char* pStartupInfo)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::Init", "TRACE-ENTRY"); }
 	EVRInitError err;
 	VR_InitInternal2(&err, eApplicationType, pStartupInfo);
 	return err;
@@ -236,7 +233,6 @@ EVRInitError BaseClientCore::Init(vr::EVRApplicationType eApplicationType, const
 
 void BaseClientCore::Cleanup()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::Cleanup", "TRACE-ENTRY"); }
 	// Note that this object is not affected by the shutdown, as it is handled seperately
 	//  from all the other interface objects and is only destroyed when the DLL is unloaded.
 	VR_ShutdownInternal();
@@ -244,37 +240,31 @@ void BaseClientCore::Cleanup()
 
 EVRInitError BaseClientCore::IsInterfaceVersionValid(const char* pchInterfaceVersion)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::IsInterfaceVersionValid", "TRACE-ENTRY"); }
 	return VR_IsInterfaceVersionValid(pchInterfaceVersion) ? VRInitError_None : VRInitError_Init_InvalidInterface;
 }
 
 void* BaseClientCore::GetGenericInterface(const char* pchNameAndVersion, EVRInitError* peError)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::GetGenericInterface", "TRACE-ENTRY"); }
 	return VR_GetGenericInterface(pchNameAndVersion, peError);
 }
 
 bool BaseClientCore::BIsHmdPresent()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::BIsHmdPresent", "TRACE-ENTRY"); }
 	return VR_IsHmdPresent();
 }
 
 const char* BaseClientCore::GetEnglishStringForHmdError(vr::EVRInitError eError)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::GetEnglishStringForHmdError", "TRACE-ENTRY"); }
 	return VR_GetVRInitErrorAsEnglishDescription(eError);
 }
 
 const char* BaseClientCore::GetIDForVRInitError(vr::EVRInitError eError)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::GetIDForVRInitError", "TRACE-ENTRY"); }
 	return VR_GetVRInitErrorAsSymbol(eError);
 }
 
 std::string BaseClientCore::GetAppPath()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::GetAppPath", "TRACE-ENTRY"); }
 #ifndef _WIN32
 	LINUX_STUBBED();
 #else
@@ -286,7 +276,6 @@ std::string BaseClientCore::GetAppPath()
 
 std::wstring BaseClientCore::GetDllDir()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::GetDllDir", "TRACE-ENTRY"); }
 #ifndef _WIN32
 	LINUX_STUBBED();
 #else
@@ -299,7 +288,6 @@ std::wstring BaseClientCore::GetDllDir()
 
 void BaseClientCore::SetManifestPath(string filename)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseClientCore::SetManifestPath", "TRACE-ENTRY"); }
 	wstring listname = GetDllDir() + L"applist.json";
 	Json::Value root;
 	ReadJson(listname, root);

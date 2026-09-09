@@ -350,7 +350,6 @@ BaseInput::~BaseInput()
 
 void BaseInput::setStartupManifest(std::string manifest)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::setStartupManifest", "TRACE-ENTRY"); }
 	startupManifest = manifest;
 	if (auto input = GetUnsafeBaseInput(); input) {
 		input->SetActionManifestPath(startupManifest.c_str());
@@ -359,7 +358,6 @@ void BaseInput::setStartupManifest(std::string manifest)
 
 EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::SetActionManifestPath", "TRACE-ENTRY"); }
 	OOVR_LOGF("Loading manifest file '%s'", pchActionManifestPath);
 
 	//////////////
@@ -663,7 +661,6 @@ EVRInputError BaseInput::SetActionManifestPath(const char* pchActionManifestPath
 
 void BaseInput::LoadEmptyManifestIfRequired()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::LoadEmptyManifestIfRequired", "TRACE-ENTRY"); }
 	if (hasLoadedActions)
 		return;
 
@@ -713,7 +710,6 @@ void BaseInput::LoadEmptyManifestIfRequired()
 
 void BaseInput::BindInputsForSession()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::BindInputsForSession", "TRACE-ENTRY"); }
 	// This is called from DrvOpenXR::SetupSession. If we requested a session restart ourselves, we're also
 	// going to bind the inputs ourselves anyway, so we don't want to do that twice.
 	// If we didn't request the restart but we also haven't even loaded actions yet, there's nothing to bind yet.
@@ -769,7 +765,6 @@ void BaseInput::BindInputsForSession()
 
 void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::string& bindingsPath)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::LoadBindingsSet", "TRACE-ENTRY"); }
 	OOVR_LOGF("Loading bindings for %s", profile.GetPath().c_str());
 
 	if (!profile.CanHaveBindings())
@@ -1042,7 +1037,6 @@ void BaseInput::LoadBindingsSet(const InteractionProfile& profile, const std::st
 
 void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::string& importBasePath, const std::string& inputName, const std::string& subMode, Action* action, std::vector<XrActionSuggestedBinding>& bindings, bool isKnuckles)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::LoadDpadAction", "TRACE-ENTRY"); }
 	// special case for dpad: we need to create additional inputs and read them ourselves
 	// verify that we actually have an input that can be used as an dpad for this profile
 	std::string parentPath = profile.TranslateAction(importBasePath);
@@ -1147,7 +1141,6 @@ void BaseInput::LoadDpadAction(const InteractionProfile& profile, const std::str
 
 void BaseInput::LoadDClickAction(const InteractionProfile& profile, const std::string& importBasePath, Action* action, std::vector<XrActionSuggestedBinding>& bindings)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::LoadDClickAction", "TRACE-ENTRY"); }
 	std::string clickPath = profile.TranslateAction(importBasePath + "/click");
 
 	if (!profile.IsInputPathValid(clickPath)) {
@@ -1187,7 +1180,6 @@ void BaseInput::LoadDClickAction(const InteractionProfile& profile, const std::s
 
 void BaseInput::CreateLegacyActions()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::CreateLegacyActions", "TRACE-ENTRY"); }
 	// Add the stuff required to make the backend work
 	// This means the pose and haptic inputs for each hand, and actions for all the legacy inputs, into a new ActionSet that
 	// is always active with a lower priority than the game's one.
@@ -1253,21 +1245,18 @@ void BaseInput::CreateLegacyActions()
 
 EVRInputError BaseInput::GetActionSetHandle(const char* pchActionSetName, VRActionSetHandle_t* pHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetActionSetHandle", "TRACE-ENTRY"); }
 	*pHandle = actionSets.LookupHandle(pchActionSetName);
 	return vr::VRInputError_None;
 }
 
 EVRInputError BaseInput::GetActionHandle(const char* pchActionName, VRActionHandle_t* pHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetActionHandle", "TRACE-ENTRY"); }
 	*pHandle = actions.LookupHandle(pchActionName);
 	return vr::VRInputError_None;
 }
 
 EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VRInputValueHandle_t* pHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetInputSourceHandle", "TRACE-ENTRY"); }
 	// Get the existing InputValueHandle if it already exists, or make a new one otherwise. Applications can
 	// get whatever handles they want, regardless of whether the runtime associates any special meaning with it.
 
@@ -1309,7 +1298,6 @@ EVRInputError BaseInput::GetInputSourceHandle(const char* pchInputSourcePath, VR
 EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t* pSets,
     uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::UpdateActionState", "TRACE-ENTRY"); }
 	// TODO if the game is using legacy input, call this every frame
 
 	OOVR_FALSE_ABORT(sizeof(*pSets) == unSizeOfVRSelectedActionSet_t);
@@ -1367,7 +1355,6 @@ EVRInputError BaseInput::UpdateActionState(VR_ARRAY_COUNT(unSetCount) VRActiveAc
 
 void BaseInput::InternalUpdate()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::InternalUpdate", "TRACE-ENTRY"); }
 	// Always increment this once per frame, and only once per frame
 	syncSerialDigital++;
 
@@ -1385,7 +1372,6 @@ void BaseInput::InternalUpdate()
 
 XrResult BaseInput::getBooleanOrDpadData(const InteractionProfile* profile, Action& action, const XrActionStateGetInfo* getInfo, XrActionStateBoolean* state)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::getBooleanOrDpadData", "TRACE-ENTRY"); }
 	const auto& perProfileData = action.perProfileData.contains(profile) ? action.perProfileData[profile] : Action::defaultActionData;
 	for (auto forced_path : perProfileData.forcedSubactionPaths) {
 		if (forced_path != getInfo->subactionPath)
@@ -1603,7 +1589,6 @@ XrResult BaseInput::getBooleanOrDpadData(const InteractionProfile* profile, Acti
 EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigitalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetDigitalActionData", "TRACE-ENTRY"); }
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1656,7 +1641,6 @@ EVRInputError BaseInput::GetDigitalActionData(VRActionHandle_t action, InputDigi
 EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalogActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetAnalogActionData", "TRACE-ENTRY"); }
 
 	GET_ACTION_FROM_HANDLE(act, action);
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1799,7 +1783,6 @@ EVRInputError BaseInput::GetAnalogActionData(VRActionHandle_t action, InputAnalo
 EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow,
     InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetPoseActionData", "TRACE-ENTRY"); }
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	ZeroMemory(pActionData, unActionDataSize);
@@ -1922,19 +1905,16 @@ EVRInputError BaseInput::GetPoseActionData(VRActionHandle_t action, ETrackingUni
 
 EVRInputError BaseInput::GetPoseActionDataRelativeToNow(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, float fPredictedSecondsFromNow, InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetPoseActionDataRelativeToNow", "TRACE-ENTRY"); }
 	// Same function, different name - the 'RelativeToNow' suffix was added when GetPoseActionDataForNextFrame was added
 	return GetPoseActionData(action, eOrigin, fPredictedSecondsFromNow, pActionData, unActionDataSize, ulRestrictToDevice);
 }
 EVRInputError BaseInput::GetPoseActionDataForNextFrame(VRActionHandle_t action, ETrackingUniverseOrigin eOrigin, InputPoseActionData_t* pActionData, uint32_t unActionDataSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetPoseActionDataForNextFrame", "TRACE-ENTRY"); }
 	return GetPoseActionData(action, eOrigin, 0, pActionData, unActionDataSize, ulRestrictToDevice);
 }
 EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t action, InputSkeletalActionData_t* pActionData, uint32_t unActionDataSize,
     VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalActionData", "TRACE-ENTRY"); }
 	// This is the old version of the function, the new one doesn't have the device restriction
 	// Hopefully noone depends on this and we can just ignore it
 	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
@@ -1945,7 +1925,6 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t action, InputSke
 }
 EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, InputSkeletalActionData_t* out, uint32_t unActionDataSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalActionData", "TRACE-ENTRY"); }
 	// Make sure the target struct is the right size, in case it grows in the future
 	// Note: CVRInput_004 has a manual override for this in CVRInput.cpp to deal with an old struct version, it
 	// sets unActionDataSize to what we're expecting so we don't have to handle that here.
@@ -1972,7 +1951,6 @@ EVRInputError BaseInput::GetSkeletalActionData(VRActionHandle_t actionHandle, In
 
 EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole* peDominantHand)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetDominantHand", "TRACE-ENTRY"); }
 	// The API documentation says we need allowSetDominantHand for this, but that
 	// seems like a mistake (i.e. that comment was probably meant to be on
 	// SetDominantHand), so I'll just allow it always.
@@ -1981,7 +1959,6 @@ EVRInputError BaseInput::GetDominantHand(vr::ETrackedControllerRole* peDominantH
 }
 EVRInputError BaseInput::SetDominantHand(vr::ETrackedControllerRole eDominantHand)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::SetDominantHand", "TRACE-ENTRY"); }
 	if (allowSetDominantHand) {
 		dominantHand = eDominantHand;
 		return VRInputError_None;
@@ -1991,24 +1968,20 @@ EVRInputError BaseInput::SetDominantHand(vr::ETrackedControllerRole eDominantHan
 }
 EVRInputError BaseInput::GetBoneCount(VRActionHandle_t action, uint32_t* pBoneCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetBoneCount", "TRACE-ENTRY"); }
 	// Maybe we should check the action?
 	*pBoneCount = (int)eBone_Count;
 	return vr::VRInputError_None;
 }
 EVRInputError BaseInput::GetBoneHierarchy(VRActionHandle_t action, VR_ARRAY_COUNT(unIndexArayCount) BoneIndex_t* pParentIndices, uint32_t unIndexArayCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetBoneHierarchy", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVRInputError BaseInput::GetBoneName(VRActionHandle_t action, BoneIndex_t nBoneIndex, VR_OUT_STRING() char* pchBoneName, uint32_t unNameBufferSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetBoneName", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace, EVRSkeletalReferencePose eReferencePose, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalReferenceTransforms", "TRACE-ENTRY"); }
 	GET_ACTION_FROM_HANDLE(act, actionHandle);
 
 	std::span<VRBoneTransform_t> out(pTransformArray, unTransformArrayCount);
@@ -2037,7 +2010,6 @@ EVRInputError BaseInput::GetSkeletalReferenceTransforms(VRActionHandle_t actionH
 }
 EVRInputError BaseInput::GetSkeletalTrackingLevel(VRActionHandle_t action, EVRSkeletalTrackingLevel* pSkeletalTrackingLevel)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalTrackingLevel", "TRACE-ENTRY"); }
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	if (act->skeletalHand == ITrackedDevice::HAND_NONE)
@@ -2078,7 +2050,6 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeleta
     EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray,
     uint32_t unTransformArrayCount, VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalBoneData", "TRACE-ENTRY"); }
 	// This is the old version of the function, the new one doesn't have the device restriction
 	// Hopefully noone depends on this and we can just ignore it
 	if (ulRestrictToDevice != vr::k_ulInvalidInputValueHandle) {
@@ -2091,7 +2062,6 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t action, EVRSkeleta
 EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRSkeletalTransformSpace eTransformSpace,
     EVRSkeletalMotionRange eMotionRange, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalBoneData", "TRACE-ENTRY"); }
 	ZeroMemory(pTransformArray, sizeof(VRBoneTransform_t) * unTransformArrayCount);
 	GET_ACTION_FROM_HANDLE(action, actionHandle);
 
@@ -2168,7 +2138,6 @@ EVRInputError BaseInput::GetSkeletalBoneData(VRActionHandle_t actionHandle, EVRS
 }
 EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, EVRSummaryType eSummaryType, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalSummaryData", "TRACE-ENTRY"); }
 	GET_ACTION_FROM_HANDLE(action, actionHandle);
 
 	ZeroMemory(pSkeletalSummaryData, sizeof(VRSkeletalSummaryData_t));
@@ -2185,7 +2154,6 @@ EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t actionHandle, E
 
 EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceType hand, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::getRealSkeletalSummary", "TRACE-ENTRY"); }
 	// See WaitForXrGbl() in xrutil.h - getRealSkeletalSummary is also called
 	// directly (not just via GetSkeletalSummaryData's guarded check above)
 	// from the legacy controller-state axis emulation path.
@@ -2276,41 +2244,35 @@ EVRInputError BaseInput::getRealSkeletalSummary(ITrackedDevice::TrackedDeviceTyp
 
 EVRInputError BaseInput::GetSkeletalSummaryData(VRActionHandle_t action, VRSkeletalSummaryData_t* pSkeletalSummaryData)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalSummaryData", "TRACE-ENTRY"); }
 	return GetSkeletalSummaryData(action, VRSummaryType_FromDevice, pSkeletalSummaryData);
 }
 EVRInputError BaseInput::GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalTransformSpace eTransformSpace,
     EVRSkeletalMotionRange eMotionRange, VR_OUT_BUFFER_COUNT(unCompressedSize) void* pvCompressedData, uint32_t unCompressedSize,
     uint32_t* punRequiredCompressedSize, VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalBoneDataCompressed", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVRInputError BaseInput::GetSkeletalBoneDataCompressed(VRActionHandle_t action, EVRSkeletalMotionRange eMotionRange,
     VR_OUT_BUFFER_COUNT(unCompressedSize) void* pvCompressedData, uint32_t unCompressedSize, uint32_t* punRequiredCompressedSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetSkeletalBoneDataCompressed", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVRInputError BaseInput::DecompressSkeletalBoneData(void* pvCompressedBuffer, uint32_t unCompressedBufferSize,
     EVRSkeletalTransformSpace* peTransformSpace, VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray,
     uint32_t unTransformArrayCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::DecompressSkeletalBoneData", "TRACE-ENTRY"); }
 
 	STUBBED();
 }
 EVRInputError BaseInput::DecompressSkeletalBoneData(const void* pvCompressedBuffer, uint32_t unCompressedBufferSize, EVRSkeletalTransformSpace eTransformSpace,
     VR_ARRAY_COUNT(unTransformArrayCount) VRBoneTransform_t* pTransformArray, uint32_t unTransformArrayCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::DecompressSkeletalBoneData", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, float fStartSecondsFromNow, float fDurationSeconds,
     float fFrequency, float fAmplitude, VRInputValueHandle_t ulRestrictToDevice)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::TriggerHapticVibrationAction", "TRACE-ENTRY"); }
 	GET_ACTION_FROM_HANDLE(act, action);
 
 	if (act->type != ActionType::Vibration) {
@@ -2346,7 +2308,6 @@ EVRInputError BaseInput::TriggerHapticVibrationAction(VRActionHandle_t action, f
 EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t digitalActionHandle,
     VR_ARRAY_COUNT(originOutCount) VRInputValueHandle_t* originsOut, uint32_t originOutCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetActionOrigins", "TRACE-ENTRY"); }
 	GET_ACTION_SET_FROM_HANDLE(set, actionSetHandle);
 	GET_ACTION_FROM_HANDLE(act, digitalActionHandle);
 
@@ -2398,14 +2359,12 @@ EVRInputError BaseInput::GetActionOrigins(VRActionSetHandle_t actionSetHandle, V
 
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetOriginLocalizedName", "TRACE-ENTRY"); }
 	return GetOriginLocalizedName(origin, pchNameArray, unNameArraySize, VRInputString_All);
 }
 
 EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_OUT_STRING() char* pchNameArray, uint32_t unNameArraySize,
     uint64_t unStringSectionsToInclude)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetOriginLocalizedName", "TRACE-ENTRY"); }
 	if (origin == vr::k_ulInvalidInputValueHandle)
 		return vr::VRInputError_InvalidHandle;
 
@@ -2460,7 +2419,6 @@ EVRInputError BaseInput::GetOriginLocalizedName(VRInputValueHandle_t origin, VR_
 
 EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin, InputOriginInfo_t* info, uint32_t unOriginInfoSize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetOriginTrackedDeviceInfo", "TRACE-ENTRY"); }
 	memset(info, 0, unOriginInfoSize);
 	OOVR_FALSE_ABORT(unOriginInfoSize == sizeof(InputOriginInfo_t));
 
@@ -2483,7 +2441,6 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOVR_InputBindingInfo_t* bindingInfo,
     uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t* punReturnedBindingInfoCount)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetActionBindingInfo", "TRACE-ENTRY"); }
 	memset(bindingInfo, 0, unBindingInfoSize * unBindingInfoCount);
 	if (punReturnedBindingInfoCount)
 		*punReturnedBindingInfoCount = 0;
@@ -2556,13 +2513,11 @@ EVRInputError BaseInput::GetActionBindingInfo(VRActionHandle_t actionHandle, OOV
 
 EVRInputError BaseInput::ShowActionOrigins(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::ShowActionOrigins", "TRACE-ENTRY"); }
 	STUBBED();
 }
 EVRInputError BaseInput::ShowBindingsForActionSet(VR_ARRAY_COUNT(unSetCount) VRActiveActionSet_t* pSets, uint32_t unSizeOfVRSelectedActionSet_t,
     uint32_t unSetCount, VRInputValueHandle_t originToHighlight)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::ShowBindingsForActionSet", "TRACE-ENTRY"); }
 
 	STUBBED();
 }
@@ -2571,13 +2526,11 @@ EVRInputError BaseInput::GetComponentStateForBinding(const char* pchRenderModelN
     const OOVR_InputBindingInfo_t* pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount,
     vr::RenderModel_ComponentState_t* pComponentState)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetComponentStateForBinding", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 bool BaseInput::IsUsingLegacyInput()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::IsUsingLegacyInput", "TRACE-ENTRY"); }
 	return usingLegacyInput;
 }
 
@@ -2586,13 +2539,11 @@ bool BaseInput::IsUsingLegacyInput()
 EVRInputError BaseInput::OpenBindingUI(const char* pchAppKey, VRActionSetHandle_t ulActionSetHandle,
     VRInputValueHandle_t ulDeviceHandle, bool bShowOnDesktop)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::OpenBindingUI", "TRACE-ENTRY"); }
 	STUBBED();
 }
 
 EVRInputError BaseInput::GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath, char* pchVariantArray, uint32_t unVariantArraySize)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetBindingVariant", "TRACE-ENTRY"); }
 	if (unVariantArraySize == 0) {
 		return VRInputError_MaxCapacityReached;
 	}
@@ -2605,19 +2556,16 @@ EVRInputError BaseInput::GetBindingVariant(vr::VRInputValueHandle_t ulDevicePath
 
 BaseInput::Action* BaseInput::cast_AH(VRActionHandle_t handle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::cast_AH", "TRACE-ENTRY"); }
 	return actions.LookupItem((RegHandle)handle);
 }
 
 BaseInput::ActionSet* BaseInput::cast_ASH(VRActionSetHandle_t handle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::cast_ASH", "TRACE-ENTRY"); }
 	return actionSets.LookupItem((RegHandle)handle);
 }
 
 BaseInput::InputValueHandle* BaseInput::cast_IVH(VRInputValueHandle_t handle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::cast_IVH", "TRACE-ENTRY"); }
 	if (handle == vr::k_ulInvalidInputValueHandle)
 		OOVR_ABORT("Called ivhToDev for invalid input value handle");
 
@@ -2626,7 +2574,6 @@ BaseInput::InputValueHandle* BaseInput::cast_IVH(VRInputValueHandle_t handle)
 
 std::shared_ptr<ITrackedDevice> BaseInput::ivhToDev(VRInputValueHandle_t handle)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::ivhToDev", "TRACE-ENTRY"); }
 	const InputValueHandle* ivh = cast_IVH(handle);
 
 	ITrackedDevice::TrackedDeviceType hand = ITrackedDevice::HAND_NONE;
@@ -2647,7 +2594,6 @@ std::shared_ptr<ITrackedDevice> BaseInput::ivhToDev(VRInputValueHandle_t handle)
 
 bool BaseInput::checkRestrictToDevice(vr::VRInputValueHandle_t restrictToDevice, XrPath subactionPath)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::checkRestrictToDevice", "TRACE-ENTRY"); }
 	if (restrictToDevice == vr::k_ulInvalidInputValueHandle)
 		return true;
 
@@ -2657,7 +2603,6 @@ bool BaseInput::checkRestrictToDevice(vr::VRInputValueHandle_t restrictToDevice,
 
 VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const char* subactionPath)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::activeOriginFromSubaction", "TRACE-ENTRY"); }
 	// FIXME the docs for xrEnumerateBoundSourcesForAction are wrong and will be updated (source: rpavlik). They don't
 	//  have to return a path listed in the input profile, they can be literally anything (not even a /user/hand/<side>
 	//  prefix is guaranteed). Thus we'll need some sophisticated lying to the application about this.
@@ -2706,7 +2651,6 @@ VRInputValueHandle_t BaseInput::activeOriginFromSubaction(Action* action, const 
 
 bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDeviceIndex, vr::VRControllerState_t* state)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetLegacyControllerState", "TRACE-ENTRY"); }
 	*state = {};
 
 	// FIXME implement packetNum
@@ -2802,7 +2746,6 @@ bool BaseInput::GetLegacyControllerState(vr::TrackedDeviceIndex_t controllerDevi
 
 void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDeviceIndex, uint64_t durationNanos)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::TriggerLegacyHapticPulse", "TRACE-ENTRY"); }
 	int hand = DeviceIndexToHandId(controllerDeviceIndex);
 	if (hand == -1)
 		return;
@@ -2826,7 +2769,6 @@ void BaseInput::TriggerLegacyHapticPulse(vr::TrackedDeviceIndex_t controllerDevi
 
 int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::DeviceIndexToHandId", "TRACE-ENTRY"); }
 	std::shared_ptr<ITrackedDevice> dev = BackendManager::Instance().GetDevice(idx);
 	if (!dev)
 		return -1;
@@ -2845,7 +2787,6 @@ int BaseInput::DeviceIndexToHandId(vr::TrackedDeviceIndex_t idx)
 
 void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, bool aimPose)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetHandSpace", "TRACE-ENTRY"); }
 	space = XR_NULL_HANDLE;
 
 	// If the manifest isn't loaded yet (still on the first frame) return null
@@ -2862,7 +2803,6 @@ void BaseInput::GetHandSpace(vr::TrackedDeviceIndex_t index, XrSpace& space, boo
 
 void BaseInput::GetHandSpace(ITrackedDevice::TrackedDeviceType hand, XrSpace& space, bool aimPose)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::GetHandSpace", "TRACE-ENTRY"); }
 	LegacyControllerActions& ctrl = legacyControllers[hand];
 
 	space = aimPose ? ctrl.aimPoseSpace : ctrl.gripPoseSpace;
@@ -2870,13 +2810,11 @@ void BaseInput::GetHandSpace(ITrackedDevice::TrackedDeviceType hand, XrSpace& sp
 
 bool BaseInput::AreActionsLoaded()
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::AreActionsLoaded", "TRACE-ENTRY"); }
 	return hasLoadedActions;
 }
 
 ITrackedDevice::TrackedDeviceType BaseInput::ParseAndRemoveHandPrefix(std::string& toModify)
 {
-	{ static thread_local int _n=0; if(_n++<20) oovr_log_raw(__FILE__, __LINE__, "BaseInput::ParseAndRemoveHandPrefix", "TRACE-ENTRY"); }
 	static std::string leftPrefix = "/user/hand/left/";
 	static std::string rightPrefix = "/user/hand/right/";
 

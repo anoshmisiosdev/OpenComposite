@@ -947,7 +947,6 @@ void XrBackend::UpdateInteractionProfile()
 			uint32_t tmp;
 			char path_name[XR_MAX_PATH_LENGTH];
 			OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, state.interactionProfile, XR_MAX_PATH_LENGTH, &tmp, path_name));
-			{ static thread_local int _n = 0; if (_n++ < 10) OOVR_LOGF("%s - xrGetCurrentInteractionProfile returned: %s", info.pathstr, path_name); }
 
 			for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
 				if (profile->GetPath() == path_name) {
@@ -977,7 +976,6 @@ void XrBackend::UpdateInteractionProfile()
 		} else {
 			// interaction profile lost/not detected. This is polled every frame until a
 			// controller shows up, so throttle the log to avoid flooding.
-			{ static thread_local int _n = 0; if (_n++ < 10) OOVR_LOGF("%s - No interaction profile detected", info.pathstr); }
 			if (info.controller) {
 				info.controller.reset();
 				BaseSystem* system = GetUnsafeBaseSystem();

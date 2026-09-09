@@ -306,28 +306,6 @@ void XrHMD::GetPose(vr::ETrackingUniverseOrigin origin, vr::TrackedDevicePose_t*
 	}
 	xr_utils::PoseFromSpace(pose, xr_gbl->viewSpace, origin);
 
-	// HEIGHTDIAG: log the raw reference-space geometry OXRSys reports, once every
-	// 200 head-pose queries (~2-3s). Captures the three measurements needed to
-	// diagnose the "too high" + "rotation->translation coupling" symptoms:
-	//   viewRelFloor  = head pose in STAGE  (what a standing game gets)
-	//   viewRelSeated = head pose in LOCAL  (what a seated game gets)
-	//   seatedRelFloor= LOCAL origin height in STAGE (is OXRSys LOCAL at floor?)
-	{
-		static thread_local int _n = 0;
-		if ((_n++ % 200) == 0) {
-			XrTime t = xr_gbl->GetBestTime();
-			XrSpaceLocation vf{ XR_TYPE_SPACE_LOCATION }, vs{ XR_TYPE_SPACE_LOCATION }, sf{ XR_TYPE_SPACE_LOCATION };
-			xrLocateSpace(xr_gbl->viewSpace, xr_gbl->floorSpace, t, &vf);
-			xrLocateSpace(xr_gbl->viewSpace, xr_gbl->seatedSpace, t, &vs);
-			xrLocateSpace(xr_gbl->seatedSpace, xr_gbl->floorSpace, t, &sf);
-			OOVR_LOGF("HEIGHTDIAG origin=%d viewRelFloor=(%.3f,%.3f,%.3f) quat=(%.3f,%.3f,%.3f,%.3f) | viewRelSeated=(%.3f,%.3f,%.3f) | seatedRelFloor=(%.3f,%.3f,%.3f)",
-			    (int)origin,
-			    vf.pose.position.x, vf.pose.position.y, vf.pose.position.z,
-			    vf.pose.orientation.x, vf.pose.orientation.y, vf.pose.orientation.z, vf.pose.orientation.w,
-			    vs.pose.position.x, vs.pose.position.y, vs.pose.position.z,
-			    sf.pose.position.x, sf.pose.position.y, sf.pose.position.z);
-		}
-	}
 }
 
 float XrHMD::GetIPD()
