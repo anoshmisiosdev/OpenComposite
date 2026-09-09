@@ -830,8 +830,25 @@ void XrBackend::PumpEvents()
 	   the temporary session.
    */
 	BaseInput* input = GetUnsafeBaseInput();
-	if (input && !input->AreActionsLoaded() && sessionState == XR_SESSION_STATE_FOCUSED && !hand_left && !hand_right) {
-		QueryForInteractionProfile();
+	if (input && sessionState == XR_SESSION_STATE_FOCUSED && !hand_left && !hand_right) {
+		if (!input->AreActionsLoaded()) {
+			// No action manifest is loaded yet (legacy/no-manifest games, or the first
+			// frames of any game). The game isn't calling xrSyncActions, so we sync our
+			// internal info action set ourselves to coax the runtime into reporting an
+			// interaction profile.
+			QueryForInteractionProfile();
+		} else {
+			// An action manifest is loaded, so the game itself calls xrSyncActions every
+			// frame (via UpdateActionState) and the runtime already has a current
+			// interaction profile for each hand. We would normally be told about it via an
+			// XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED event, but some runtimes
+			// (notably OXRSys) never emit that event, which left controllers permanently
+			// unregistered for action-based games. Poll the current interaction profile
+			// directly instead of relying solely on the event, so the controllers get
+			// registered as connected tracked devices regardless. This stops polling as
+			// soon as a controller is created (the !hand_left && !hand_right guard above).
+			UpdateInteractionProfile();
+		}
 	}
 }
 
@@ -930,6 +947,7 @@ void XrBackend::UpdateInteractionProfile()
 			uint32_t tmp;
 			char path_name[XR_MAX_PATH_LENGTH];
 			OOVR_FAILED_XR_ABORT(xrPathToString(xr_instance, state.interactionProfile, XR_MAX_PATH_LENGTH, &tmp, path_name));
+			{ static thread_local int _n = 0; if (_n++ < 10) OOVR_LOGF("%s - xrGetCurrentInteractionProfile returned: %s", info.pathstr, path_name); }
 
 			for (const std::unique_ptr<InteractionProfile>& profile : InteractionProfile::GetProfileList()) {
 				if (profile->GetPath() == path_name) {
@@ -957,8 +975,9 @@ void XrBackend::UpdateInteractionProfile()
 				OOVR_ABORTF("Runtime unexpectedly returned an unknown interaction profile: %s", path_name);
 			}
 		} else {
-			// interaction profile lost/not detected
-			OOVR_LOGF("%s - No interaction profile detected", info.pathstr);
+			// interaction profile lost/not detected. This is polled every frame until a
+			// controller shows up, so throttle the log to avoid flooding.
+			{ static thread_local int _n = 0; if (_n++ < 10) OOVR_LOGF("%s - No interaction profile detected", info.pathstr); }
 			if (info.controller) {
 				info.controller.reset();
 				BaseSystem* system = GetUnsafeBaseSystem();
@@ -1140,6 +1159,12 @@ void XrBackend::QueryForInteractionProfile()
 	info.activeActionSets = active;
 
 	OOVR_FAILED_XR_ABORT(xrSyncActions(xr_session.get(), &info));
+
+	// The interaction profile is updated by the xrSyncActions call above. Normally we'd be
+	// notified of it via an XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED event, but some
+	// runtimes (notably OXRSys) never emit that event, so poll the current profile directly
+	// here to register the controllers rather than relying on the event alone.
+	UpdateInteractionProfile();
 }
 
 void XrBackend::CreateInfoSet()
