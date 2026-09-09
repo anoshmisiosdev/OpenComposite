@@ -50,6 +50,8 @@ BaseCompositor::~BaseCompositor()
 void BaseCompositor::SetTrackingSpace(ETrackingUniverseOrigin eOrigin)
 {
 	{ static thread_local int _n=0; if(_n++<50) oovr_log_raw(__FILE__, __LINE__, "BaseCompositor::SetTrackingSpace", "TRACE-ENTRY"); }
+	OOVR_LOGF("HEIGHTDIAG SetTrackingSpace eOrigin=%d (%s)", (int)eOrigin,
+	    eOrigin == TrackingUniverseSeated ? "Seated/LOCAL" : (eOrigin == TrackingUniverseStanding ? "Standing/STAGE" : "Other"));
 	XrReferenceSpaceType origin = XR_REFERENCE_SPACE_TYPE_STAGE;
 	if (eOrigin == TrackingUniverseSeated) {
 		origin = XR_REFERENCE_SPACE_TYPE_LOCAL;
