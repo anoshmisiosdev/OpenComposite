@@ -298,14 +298,49 @@ void DX11Compositor::CheckCreateSwapChain(const vr::Texture_t* texture, const vr
 	}
 }
 
+// A game may submit a block-compressed (BCn) texture as an eye/overlay layer - e.g. a
+// pre-compressed loading/UI image (observed: BC3_UNORM_SRGB=78, sampled-only). OXRSys swap
+// chains can't hold BCn, so we target a renderable RGBA8 swap chain and GPU-decompress the
+// source into it via the shader-blit path in CopyToSwapchain (Apple Silicon Metal can sample
+// BCn). For that we bind the source as an SRV, which needs a *typed* sampleable format.
+// Returns true and sets sampleFormat for the colour BC families we decompress (BC1/2/3/7);
+// returns false for exotic BC (BC4/5 single/two-channel data, BC6H HDR) we don't convert.
+static bool BlockCompressedColorSrv(DXGI_FORMAT format, bool wantSrgb, DXGI_FORMAT& sampleFormat)
+{
+	switch (format) {
+	case DXGI_FORMAT_BC1_TYPELESS: case DXGI_FORMAT_BC1_UNORM: case DXGI_FORMAT_BC1_UNORM_SRGB:
+		sampleFormat = wantSrgb ? DXGI_FORMAT_BC1_UNORM_SRGB : DXGI_FORMAT_BC1_UNORM; return true;
+	case DXGI_FORMAT_BC2_TYPELESS: case DXGI_FORMAT_BC2_UNORM: case DXGI_FORMAT_BC2_UNORM_SRGB:
+		sampleFormat = wantSrgb ? DXGI_FORMAT_BC2_UNORM_SRGB : DXGI_FORMAT_BC2_UNORM; return true;
+	case DXGI_FORMAT_BC3_TYPELESS: case DXGI_FORMAT_BC3_UNORM: case DXGI_FORMAT_BC3_UNORM_SRGB:
+		sampleFormat = wantSrgb ? DXGI_FORMAT_BC3_UNORM_SRGB : DXGI_FORMAT_BC3_UNORM; return true;
+	case DXGI_FORMAT_BC7_TYPELESS: case DXGI_FORMAT_BC7_UNORM: case DXGI_FORMAT_BC7_UNORM_SRGB:
+		sampleFormat = wantSrgb ? DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT_BC7_UNORM; return true;
+	default:
+		return false;
+	}
+}
+
+static bool IsBlockCompressed(DXGI_FORMAT f)
+{
+	return (f >= DXGI_FORMAT_BC1_TYPELESS && f <= DXGI_FORMAT_BC5_SNORM) // BC1..BC5 (70..84)
+	    || (f >= DXGI_FORMAT_BC6H_TYPELESS && f <= DXGI_FORMAT_BC7_UNORM_SRGB); // BC6H..BC7 (94..99)
+}
+
 void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRTextureBounds_t* bounds, std::optional<XruEye> eye, vr::EVRSubmitFlags submitFlags)
 {
 	auto* src = (ID3D11Texture2D*)texture->handle;
 
-	// OpenXR swap chain doesn't support weird formats like DXGI_FORMAT_BC1_TYPELESS
 	D3D11_TEXTURE2D_DESC srcDesc;
 	src->GetDesc(&srcDesc);
-	if (srcDesc.Format == DXGI_FORMAT_BC1_TYPELESS) {
+
+	// Classify a block-compressed source. BCn is 8bpc so the auto colourspace resolves to
+	// gamma/sRGB; match the SRV's sRGB-ness to that so sample(sRGB)->store(sRGB) is identity.
+	const bool wantSrgb = texture->eColorSpace != vr::ColorSpace_Linear;
+	DXGI_FORMAT bcSampleFormat = DXGI_FORMAT_UNKNOWN;
+	const bool decompressBC = BlockCompressedColorSrv(srcDesc.Format, wantSrgb, bcSampleFormat);
+	if (IsBlockCompressed(srcDesc.Format) && !decompressBC) {
+		// Exotic BC (BC4/BC5/BC6H) we don't decompress - skip gracefully rather than abort.
 		if (chain) {
 			OOVR_FAILED_XR_ABORT(xrDestroySwapchain(chain));
 			chain = XR_NULL_HANDLE;
@@ -353,12 +388,21 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 	// (XR_ERROR_SWAPCHAIN_RECT_INVALID), so we flip (and crop the eye's sub-region) here with a
 	// shader pass, writing upright pixels into the per-eye swapchain. Only non-MSAA sources are
 	// handled this way; an MSAA flipped source would fall through to the resolve/copy path.
-	if (bounds && bounds->vMin > bounds->vMax && srcDesc.SampleDesc.Count == 1 && !swapchain_rtvs.empty()) {
+	// The shader-blit path is used when the game requests a vertical flip (vMin > vMax; a
+	// bottom-left texture origin like Unity/OpenGL, e.g. SUPERHOT VR), and always for a
+	// block-compressed source, which a plain CopySubresourceRegion cannot decompress into the
+	// RGBA swap chain. A plain copy also cannot flip, and a negative-height imageRect is rejected
+	// by strict runtimes (XR_ERROR_SWAPCHAIN_RECT_INVALID), so we sample (and crop the eye's
+	// sub-region) here with a shader pass, writing upright RGBA pixels into the per-eye swapchain.
+	// Only non-MSAA sources are handled this way; an MSAA flipped source falls through to resolve/copy.
+	const bool flipRequested = bounds && bounds->vMin > bounds->vMax;
+	if ((flipRequested || decompressBC) && srcDesc.SampleDesc.Count == 1 && !swapchain_rtvs.empty()) {
 		// Create an SRV with an explicit typed format (the source is often TYPELESS, which cannot
-		// use a null SRV desc). Matching the swapchain's format makes the sample->store a colour
-		// identity, mirroring the raw byte copy that CopySubresourceRegion would have done.
+		// use a null SRV desc). For a block-compressed source the SRV must be the source's own
+		// (typed, sampleable) BC format so the GPU decompresses it; otherwise match the swapchain's
+		// format so the sample->store is a colour identity, mirroring the raw byte copy.
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = swapchainDxgiFormat;
+		srvDesc.Format = decompressBC ? bcSampleFormat : swapchainDxgiFormat;
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		srvDesc.Texture2D.MipLevels = 1;
@@ -366,10 +410,14 @@ void DX11Compositor::CopyToSwapchain(const vr::Texture_t* texture, const vr::VRT
 
 		// Upload the source sub-region rect (normalised). A negative height (vMax-vMin < 0)
 		// makes the shader sample bottom-to-top -> vertical flip. uMin/uMax select the eye's half.
-		float uvData[4] = {
-			bounds->uMin, bounds->vMin,
-			bounds->uMax - bounds->uMin, bounds->vMax - bounds->vMin
-		};
+		// With no bounds (a full-frame compressed submit) sample the whole texture upright.
+		float uvData[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+		if (bounds) {
+			uvData[0] = bounds->uMin;
+			uvData[1] = bounds->vMin;
+			uvData[2] = bounds->uMax - bounds->uMin;
+			uvData[3] = bounds->vMax - bounds->vMin;
+		}
 		D3D11_MAPPED_SUBRESOURCE mapped;
 		OOVR_FAILED_DX_ABORT(context->Map(uvTransformCB, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped));
 		memcpy(mapped.pData, uvData, sizeof(uvData));
@@ -571,7 +619,18 @@ bool DX11Compositor::GetFormatInfo(DXGI_FORMAT format, DX11Compositor::DxgiForma
 		DEF_FMT_UNORM(DXGI_FORMAT_B5G5R5A1_UNORM, 16, 5, 4)
 		DEF_FMT_UNORM(DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM, 32, 10, 4)
 		DEF_FMT_UNORM(DXGI_FORMAT_B4G4R4A4_UNORM, 16, 4, 4)
-		DEF_FMT(DXGI_FORMAT_BC1, 64, 16, 4)
+
+		// Block-compressed colour sources (e.g. a BC3 loading/UI overlay submitted as a
+		// layer). OXRSys swap chains can't hold BCn, so target a renderable RGBA8 swap chain;
+		// CopyToSwapchain GPU-decompresses the source into it via the shader-blit path.
+		// bpc is reported as 8 so the auto-colourspace picks the sRGB (gamma) target.
+	case DXGI_FORMAT_BC1_TYPELESS: case DXGI_FORMAT_BC1_UNORM: case DXGI_FORMAT_BC1_UNORM_SRGB:
+	case DXGI_FORMAT_BC2_TYPELESS: case DXGI_FORMAT_BC2_UNORM: case DXGI_FORMAT_BC2_UNORM_SRGB:
+	case DXGI_FORMAT_BC3_TYPELESS: case DXGI_FORMAT_BC3_UNORM: case DXGI_FORMAT_BC3_UNORM_SRGB:
+	case DXGI_FORMAT_BC7_TYPELESS: case DXGI_FORMAT_BC7_UNORM: case DXGI_FORMAT_BC7_UNORM_SRGB:
+		out = DxgiFormatInfo{ DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_UNKNOWN, 32, 8, 4 };
+		return true;
 
 	default:
 		// Unknown type
