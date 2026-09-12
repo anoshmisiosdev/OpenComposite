@@ -22,6 +22,9 @@
 #if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
 #include "glcompositor.h"
 #endif
+#if defined(SUPPORT_GL) && defined(__APPLE__)
+#include "glmetalcompositor.h"
+#endif
 #ifdef SUPPORT_GLES
 #include "glescompositor.h"
 #endif

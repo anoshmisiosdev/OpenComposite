@@ -186,7 +186,12 @@ std::unique_ptr<Compositor> BaseCompositor::CreateCompositorAPI(const vr::Textur
 	std::unique_ptr<Compositor> comp;
 
 	switch (texture->eType) {
-#if defined(SUPPORT_GL)
+#if defined(SUPPORT_GL) && defined(__APPLE__)
+	case TextureType_OpenGL: {
+		comp = std::make_unique<GLMetalCompositor>((GLuint)(intptr_t)texture->handle);
+		break;
+	}
+#elif defined(SUPPORT_GL)
 	case TextureType_OpenGL: {
 		// Double-cast to avoid a CLion warning
 		comp = std::make_unique<GLCompositor>((GLuint)(intptr_t)texture->handle);

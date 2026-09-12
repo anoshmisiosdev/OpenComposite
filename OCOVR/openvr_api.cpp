@@ -155,9 +155,10 @@ VR_INTERFACE void* VR_CALLTYPE VR_GetGenericInterface(const char* interfaceVersi
 		return impl;
 	}
 
-	OOVR_LOG(interfaceVersion);
-	OOVR_MESSAGE(interfaceVersion, "Missing interface");
-	ERR("unknown/unsupported interface " + string(interfaceVersion));
+	OOVR_LOGF("Unsupported interface requested: %s (returning InterfaceNotFound)", interfaceVersion);
+	if (error)
+		*error = VRInitError_Init_InterfaceNotFound;
+	return NULL;
 #undef INTERFACE
 }
 

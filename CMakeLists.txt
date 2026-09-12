@@ -31,6 +31,9 @@ if (WIN32)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_DX -DSUPPORT_DX11 -DSUPPORT_DX12 -DSUPPORT_VK -DSUPPORT_GL)
 elseif (ANDROID)
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GLES)
+elseif (APPLE)
+	# macOS: OpenGL apps are bridged into Metal swapchains (GLMetalCompositor); no Vulkan loader needed
+	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_GL -DSUPPORT_METAL)
 else ()
 	set(GRAPHICS_API_SUPPORT_FLAGS -DSUPPORT_VK -DSUPPORT_GL)
 endif()
@@ -105,8 +108,9 @@ if (WIN32)
 	endif ()
 
 	target_compile_definitions(Vulkan INTERFACE -DVK_USE_PLATFORM_WIN32_KHR)
-elseif (ANDROID)
+elseif (ANDROID OR APPLE)
 	# Let the system sort out the linkage, we'll just use our included headers
+	# (on macOS Vulkan is compiled for the shared OpenXR/Vulkan structs but never called)
 	target_include_directories(Vulkan INTERFACE libs/vulkan/Include)
 else ()
 	# On Linux, use the system copy
@@ -129,9 +133,17 @@ add_compile_definitions(XR_USE_GRAPHICS_API_OPENGL XR_USE_GRAPHICS_API_VULKAN)
 if (WIN32)
 	add_compile_definitions(XR_OS_WINDOWS XR_USE_PLATFORM_WIN32
 		XR_USE_GRAPHICS_API_D3D11 XR_USE_GRAPHICS_API_D3D12)
+elseif (APPLE)
+	add_compile_definitions(XR_OS_APPLE)
 else()
 	add_compile_definitions(XR_OS_LINUX XR_USE_PLATFORM_XLIB)
 endif()
+
+if (APPLE)
+	enable_language(OBJCXX)
+	# Apple's OpenGL/CGL headers are deprecated but still shipped; we need them for IOSurface interop
+	add_compile_options(-Wno-deprecated-declarations)
+endif ()
 
 if (USE_SYSTEM_OPENXR)
 	find_package(OpenXR)
@@ -256,8 +268,15 @@ target_link_libraries(DrvOpenXR PUBLIC OpenVR ${XrLib} ${jsoncppLib} ${glmLib})
 if (WIN32)
 	target_link_libraries(DrvOpenXR PUBLIC shlwapi) # PathStripPathA in DrvOpenXR.cpp
 endif ()
-if (NOT WIN32 AND NOT ANDROID)
+if (NOT WIN32 AND NOT ANDROID AND NOT APPLE)
 	target_link_libraries(DrvOpenXR PRIVATE X11) # for XFree()
+endif ()
+if (APPLE)
+	target_sources(DrvOpenXR PRIVATE
+		DrvOpenXR/tmp_gfx/TemporaryMetal.mm
+		DrvOpenXR/tmp_gfx/TemporaryMetal.h
+	)
+	target_link_libraries(DrvOpenXR PUBLIC "-framework Metal" "-framework Foundation")
 endif ()
 target_compile_definitions(DrvOpenXR PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 source_group(Public REGULAR_EXPRESSION DrvOpenXR/pub/*)
@@ -434,7 +453,16 @@ target_compile_definitions(OCCore PRIVATE ${GRAPHICS_API_SUPPORT_FLAGS})
 
 target_link_libraries(OCCore PRIVATE OpenVR Vulkan ${XrLib} ${glmLib})
 
-if (NOT WIN32 AND NOT ANDROID)
+if (APPLE)
+	target_sources(OCCore PRIVATE
+		OpenOVR/Compositor/glmetalcompositor.mm
+		OpenOVR/Compositor/glmetalcompositor.h
+		OpenOVR/Misc/xr_metal_compat.h
+	)
+	target_link_libraries(OCCore PRIVATE
+		"-framework OpenGL" "-framework Metal" "-framework IOSurface"
+		"-framework Foundation" "-framework CoreFoundation")
+elseif (NOT WIN32 AND NOT ANDROID)
 	find_package(OpenGL REQUIRED) # for glGetError()
 	target_link_libraries(OCCore PRIVATE ${OPENGL_LIBRARIES})
 endif ()
@@ -442,6 +470,10 @@ endif ()
 # Set up precompiled headers for OCCore
 target_precompile_headers(OCCore PRIVATE ${CMAKE_SOURCE_DIR}/OpenOVR/stdafx.h)
 set_source_files_properties(${OVR_PCH_EXCLUDED} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+if (APPLE)
+	# The C++ PCH can't be reused by Objective-C++ translation units
+	set_source_files_properties(OpenOVR/Compositor/glmetalcompositor.mm PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+endif ()
 
 source_group(OpenVR REGULAR_EXPRESSION ${GENERATED_DIR}/interfaces)
 source_group(OpenVR\\Drivers REGULAR_EXPRESSION ${GENERATED_DIR}/interfaces/driver_*)
@@ -529,6 +561,9 @@ endif ()
 if (MSVC)
 	# On MSVC this isn't a problem since the linker knows how to figure this stuff out
 	target_link_libraries(OCOVR OCCore DrvOpenXR)
+elseif (APPLE)
+	# ld64 resolves cyclic static-archive references itself, and errors on undefined symbols by default
+	target_link_libraries(OCOVR PUBLIC OCCore DrvOpenXR)
 else ()
 	target_link_libraries(OCOVR PRIVATE -Wl,--no-undefined)
 	target_link_libraries(OCOVR PUBLIC -Wl,--start-group OCCore DrvOpenXR -Wl,--end-group)
@@ -558,6 +593,9 @@ endif ()
 # The -Bsymbolic makes this work on exported functions - otherwise those will still use the first-defined one.
 # See the comment at the top about -fvisibility=hidden
 if (WIN32)
+elseif (APPLE)
+	# Two-level namespace already binds our own symbols internally; nothing GNU-ld-specific applies
+	target_link_libraries(OCOVR PUBLIC -ldl)
 else ()
 	target_link_options(OCOVR PRIVATE -Wl,-Bsymbolic -Wl,-Bsymbolic-functions)
 
@@ -623,6 +661,11 @@ if (WIN32)
 	else()
 		set(VRCLIENT_NAME vrclient)
 	endif()
+elseif (APPLE)
+	# Loaded directly by applications (e.g. via LWJGL's org.lwjgl.openvr.libname), so use the
+	# name the OpenVR headers/LWJGL look for
+	set(VRCLIENT_NAME libopenvr_api)
+	set(VRCLIENT_DIR bin)
 else ()
 	set(VRCLIENT_NAME vrclient)
 	if ( is_64bit_build )

@@ -32,6 +32,20 @@ std::string GetExeName()
 	PathStripPathA(exePath);
 	return { exePath };
 }
+#elif defined(__APPLE__)
+#include <libgen.h> // basename
+#include <limits.h> // PATH_MAX
+#include <mach-o/dyld.h> // _NSGetExecutablePath
+
+std::string GetExeName()
+{
+	char exePath[PATH_MAX + 1] = { 0 };
+	uint32_t size = PATH_MAX;
+	if (_NSGetExecutablePath(exePath, &size) == 0) {
+		return { basename(exePath) };
+	}
+	return { "" };
+}
 #else
 #include <libgen.h> // basename
 #include <linux/limits.h> // PATH_MAX
@@ -198,6 +212,12 @@ IBackend* DrvOpenXR::CreateOpenXRBackend(const char* startupInfo)
 		apiFlags |= XR_SUPPORTED_GRAPHICS_API_VK;
 	}
 #endif
+#if defined(SUPPORT_METAL)
+	if (availableExtensions.count(XR_KHR_METAL_ENABLE_EXTENSION_NAME)) {
+		extensions.push_back(XR_KHR_METAL_ENABLE_EXTENSION_NAME);
+		apiFlags |= XR_SUPPORTED_GRAPHICS_API_METAL;
+	}
+#endif
 #if defined(SUPPORT_GL)
 	if (availableExtensions.count(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME)) {
 		extensions.push_back(XR_KHR_OPENGL_ENABLE_EXTENSION_NAME);
@@ -299,13 +319,14 @@ IBackend* DrvOpenXR::CreateOpenXRBackend(const char* startupInfo)
 
 	bool useVulkanTmpGfx = (apiFlags & XR_SUPPORTED_GRAPHICS_API_VK) && oovr_global_configuration.InitUsingVulkan();
 	bool useD3D11TmpGfx = (apiFlags & XR_SUPPORTED_GRAPHICS_API_D3D11);
+	bool useMetalTmpGfx = (apiFlags & XR_SUPPORTED_GRAPHICS_API_METAL);
 
-#if !defined(SUPPORT_VK) && !defined(SUPPORT_DX) && !defined(SUPPORT_DX11)
+#if !defined(SUPPORT_VK) && !defined(SUPPORT_DX) && !defined(SUPPORT_DX11) && !defined(SUPPORT_METAL)
 #error No available temporary graphics implementation
 #endif
 
 	// Build a backend that works with OpenXR
-	currentBackend = new XrBackend(useVulkanTmpGfx, useD3D11TmpGfx);
+	currentBackend = new XrBackend(useVulkanTmpGfx, useD3D11TmpGfx, useMetalTmpGfx);
 
 	// Setup our OpenXR session
 	SetupSession();

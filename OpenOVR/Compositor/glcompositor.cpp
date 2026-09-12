@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+// On macOS OpenGL apps go through GLMetalCompositor (there is no GL OpenXR binding there)
+#if defined(__APPLE__) && defined(SUPPORT_GL)
+#undef SUPPORT_GL
+#endif
+
 #if defined(SUPPORT_GL) || defined(SUPPORT_GLES)
 #include "glcompositor.h"
 #endif

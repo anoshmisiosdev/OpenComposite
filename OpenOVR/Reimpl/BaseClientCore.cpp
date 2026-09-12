@@ -152,7 +152,7 @@ static wstring GetAppSettingsPath()
 	path = rwchPath;
 #elif defined(OSX)
 #error "Unsupported platform"
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 	// As defined by XDG Base Directory Specification
 	// https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
@@ -185,7 +185,7 @@ static wstring GetOpenVRConfigPath()
 {
 	wstring sConfigPath = GetAppSettingsPath();
 
-#if defined(_WIN32) || defined(__linux__)
+#if defined(_WIN32) || defined(__linux__) || defined(__APPLE__)
 	sConfigPath += L"/openvr";
 #elif defined(OSX)
 	sConfigPath += L"/.openvr";
@@ -199,7 +199,7 @@ string BaseClientCore::GetAlternativeRuntimePath()
 {
 	wstring regPath = GetOpenVRConfigPath();
 
-#if defined(_WIN32) || defined(__unix__)
+#if defined(_WIN32) || defined(__unix__) || defined(__APPLE__)
 	regPath += L"/openvrpaths.vrpath";
 #else
 #error "Unsupported platform"

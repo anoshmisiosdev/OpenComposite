@@ -11,7 +11,7 @@
 #include <Windows.h>
 #endif
 
-#if defined(SUPPORT_GL) && !defined(_WIN32)
+#if defined(SUPPORT_GL) && !defined(_WIN32) && !defined(__APPLE__)
 #include <GL/glx.h>
 #endif
 
@@ -41,6 +41,10 @@
 #include "tmp_gfx/TemporaryD3D11.h"
 #endif
 
+#if defined(SUPPORT_METAL)
+#include "tmp_gfx/TemporaryMetal.h"
+#endif
+
 #include <algorithm>
 #include <chrono>
 #include <cinttypes>
@@ -50,11 +54,17 @@ using namespace vr;
 
 std::mutex inputRestartMutex;
 std::unique_ptr<TemporaryGraphics> XrBackend::temporaryGraphics = nullptr;
-XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx)
+XrBackend::XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx, bool useMetalTmpGfx)
 {
 	memset(projectionViews, 0, sizeof(projectionViews));
 
 	// setup temporaryGraphics
+
+#if defined(SUPPORT_METAL)
+	if (useMetalTmpGfx) {
+		temporaryGraphics = std::make_unique<TemporaryMetal>();
+	}
+#endif
 
 #if defined(SUPPORT_VK)
 	if (useVulkanTmpGfx) {
@@ -154,6 +164,7 @@ void XrBackend::GetDeviceToAbsoluteTrackingPose(
 	}
 }
 
+#ifdef SUPPORT_VK
 static void find_queue_family_and_queue_idx(VkDevice dev, VkPhysicalDevice pdev, VkQueue desired_queue, uint32_t& out_queueFamilyIndex, uint32_t& out_queueIndex)
 {
 	uint32_t queue_family_count;
@@ -179,6 +190,7 @@ static void find_queue_family_and_queue_idx(VkDevice dev, VkPhysicalDevice pdev,
 	OOVR_ABORT("Couldn't find the queue family index/queue index of the queue that the OpenVR app gave us!"
 	           "This is really odd and really shouldn't ever happen");
 }
+#endif
 
 /* Submitting Frames */
 void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
@@ -260,6 +272,9 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 			break;
 		}
 		case vr::TextureType_Vulkan: {
+#ifndef SUPPORT_VK
+			OOVR_ABORT("Application is trying to submit a Vulkan texture, which OpenComposite supports but is disabled in this build");
+#else
 			const vr::VRVulkanTextureData_t* vktex = (vr::VRVulkanTextureData_t*)tex->handle;
 
 			VkPhysicalDevice xr_desire;
@@ -289,10 +304,18 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 
 			graphicsBinding = std::make_unique<BindingWrapper<XrGraphicsBindingVulkanKHR>>(binding);
 			DrvOpenXR::SetupSession();
+#endif
 			break;
 		}
 		case vr::TextureType_OpenGL: {
-#ifdef SUPPORT_GL
+#if defined(SUPPORT_GL) && defined(__APPLE__)
+			// macOS: there is no OpenGL OpenXR binding. The session was created with the temporary Metal
+			// binding, and GL frames are copied through IOSurface into Metal swapchains by GLMetalCompositor.
+			// Keep the existing session (and its command queue) rather than recreating it.
+			OOVR_FALSE_ABORT(temporaryGraphics && temporaryGraphics->GetAsMetal());
+			OOVR_LOG("macOS OpenGL app: keeping Metal session, frames go through IOSurface");
+			DrvOpenXR::SetupSession();
+#elif defined(SUPPORT_GL)
 			// The spec requires that we call this before starting a session using OpenGL. Unfortunately we
 			// can't actually do anything with this information, since the game has already created the context.
 			XrGraphicsRequirementsOpenGLKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR };
@@ -377,7 +400,9 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		}
 
 		// Real graphics binding should be setup now - get rid of temporary graphics
-		temporaryGraphics.reset();
+		// (unless the session is still bound to it, as on macOS where GL apps render through the Metal binding)
+		if (graphicsBinding)
+			temporaryGraphics.reset();
 	}
 
 	for (std::unique_ptr<Compositor>& compositor : compositors) {
@@ -1218,6 +1243,15 @@ void XrBackend::BindInfoSet()
 	info.actionSets = &infoSet;
 	OOVR_FAILED_XR_ABORT(xrAttachSessionActionSets(xr_session.get(), &info));
 }
+
+#ifdef SUPPORT_METAL
+TemporaryMetal* XrBackend::GetTemporaryMetal()
+{
+	if (!temporaryGraphics)
+		return nullptr;
+	return temporaryGraphics->GetAsMetal();
+}
+#endif
 
 const void* XrBackend::GetCurrentGraphicsBinding()
 {

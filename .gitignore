@@ -53,3 +53,4 @@
 
 # clangd cache
 .cache/
+/build-macos

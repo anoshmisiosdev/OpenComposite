@@ -14,11 +14,15 @@
 #endif
 
 #ifdef SUPPORT_GL
+#ifdef __APPLE__
+#include <OpenGL/gl3.h>
+#else
 #include <GL/gl.h>
 
 #ifndef _WIN32
 // Currently just support XLIB
 #include <GL/glx.h>
+#endif
 #endif
 
 #endif
@@ -27,7 +31,9 @@
 #include <EGL/egl.h>
 #endif
 
-#ifdef SUPPORT_VK
+#if defined(SUPPORT_VK) || defined(XR_USE_GRAPHICS_API_VULKAN)
+// openxr_platform.h needs the Vulkan types whenever XR_USE_GRAPHICS_API_VULKAN is set, even on
+// platforms where we never call Vulkan (macOS, which uses the vendored headers only)
 #include <vulkan/vulkan.h>
 #endif
 
@@ -40,6 +46,10 @@
 #include "../RuntimeExtensions/XR_MNDX_xdev_space.h"
 #include <openxr/openxr_platform.h>
 
+#ifdef SUPPORT_METAL
+#include "xr_metal_compat.h"
+#endif
+
 #include <vector>
 
 typedef uint32_t XrGraphicsApiSupportedFlags;
@@ -50,6 +60,7 @@ static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_D3D12 = 0x000
 static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_GL = 0x0004;
 static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_GLES = 0x0008;
 static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_VK = 0x0010;
+static const XrGraphicsApiSupportedFlags XR_SUPPORTED_GRAPHICS_API_METAL = 0x0020;
 
 /**
  * A wrapper class for the function pointers to OpenXR extensions.
@@ -195,6 +206,17 @@ public:
 		return pfnXrGetOpenGLGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
 	}
 #endif
+#ifdef SUPPORT_METAL
+	bool xrGetMetalGraphicsRequirementsKHR_Available()
+	{
+		return pfnXrGetMetalGraphicsRequirementsKHR != nullptr;
+	}
+	XrResult xrGetMetalGraphicsRequirementsKHR(XrInstance instance, XrSystemId systemId, XrGraphicsRequirementsMetalKHR* graphicsRequirements)
+	{
+		OOVR_FALSE_ABORT(pfnXrGetMetalGraphicsRequirementsKHR);
+		return pfnXrGetMetalGraphicsRequirementsKHR(instance, systemId, graphicsRequirements);
+	}
+#endif
 #ifdef SUPPORT_GLES
 	bool xrGetOpenGLESGraphicsRequirementsKHR_Available()
 	{
@@ -239,6 +261,9 @@ private:
 #endif
 #ifdef SUPPORT_GLES
 	PFN_xrGetOpenGLESGraphicsRequirementsKHR pfnXrGetOpenGLESGraphicsRequirementsKHR = nullptr;
+#endif
+#ifdef SUPPORT_METAL
+	PFN_xrGetMetalGraphicsRequirementsKHR pfnXrGetMetalGraphicsRequirementsKHR = nullptr;
 #endif
 };
 

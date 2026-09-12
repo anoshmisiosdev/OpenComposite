@@ -108,6 +108,12 @@ XrExt::XrExt(XrGraphicsApiSupportedFlags apis, const std::vector<const char*>& e
 	}
 #endif
 
+#ifdef SUPPORT_METAL
+	if (apis & XR_SUPPORTED_GRAPHICS_API_METAL) {
+		XR_BIND(xrGetMetalGraphicsRequirementsKHR, pfnXrGetMetalGraphicsRequirementsKHR);
+	}
+#endif
+
 #undef XR_BIND
 #undef XR_BIND_OPT
 }

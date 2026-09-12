@@ -19,7 +19,7 @@ class XrBackend : public IBackend {
 public:
 	DECLARE_BACKEND_FUNCS(virtual, override)
 
-	XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx);
+	XrBackend(bool useVulkanTmpGfx, bool useD3D11TmpGfx, bool useMetalTmpGfx = false);
 	~XrBackend() override;
 
 	/**
@@ -58,6 +58,11 @@ public:
 
 #ifdef SUPPORT_VK
 	static void VkGetPhysicalDevice(VkInstance instance, VkPhysicalDevice* out);
+#endif
+
+#ifdef SUPPORT_METAL
+	// The Metal device/queue the session is bound to (macOS GL apps render through it)
+	static class TemporaryMetal* GetTemporaryMetal();
 #endif
 
 private:
@@ -149,7 +154,7 @@ private:
 		    : data(data) {}
 		~BindingWrapper() override
 		{
-#if defined(SUPPORT_GL) && !defined(_WIN32)
+#if defined(SUPPORT_GL) && !defined(_WIN32) && !defined(__APPLE__)
 			if constexpr (std::is_same_v<T, struct XrGraphicsBindingOpenGLXlibKHR>)
 				glXDestroyContext(data.xDisplay, data.glxContext);
 #endif

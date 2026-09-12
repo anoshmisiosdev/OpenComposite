@@ -279,6 +279,10 @@ std::shared_ptr<{cls}> GetCreate{getter_name}() {{
                 fi.write(f"extern \"C\" {f.return_type} {real_name}({abi_real_params(cname, f)}) {{\n"
                          f"{log_stmt}"
                          f"\t{return_str} self->base->{f.name}({nargs});\n}}\n")
+                real_call_args = f"this, {f.args_names()}" if f.args_names() else "this"
+                # The register swap is only meaningful (and only assembles) for Windows x64: on SysV
+                # x86-64 it would clobber real arguments, and Mach-O symbols need an underscore prefix.
+                fi.write("#if defined(_WIN32) && defined(__x86_64__)\n")
                 fi.write(f"__attribute__((naked)) {f.return_type} {cname}::{f.name}({f.args_str()}) {{\n"
                          "\t__asm__ volatile(\n"
                          "\t\t\"mov %rcx, %rax\\n\\t\"\n"
@@ -286,6 +290,9 @@ std::shared_ptr<{cls}> GetCreate{getter_name}() {{
                          "\t\t\"mov %rax, %rdx\\n\\t\"\n"
                          f"\t\t\"jmp {real_name}\\n\\t\"\n"
                          "\t);\n}\n")
+                fi.write("#else\n")
+                fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()}) {{ return {real_name}({real_call_args}); }}\n")
+                fi.write("#endif\n")
             else:
                 fi.write(f"{f.return_type} {cname}::{f.name}({f.args_str()}) {{\n"
                          f"{log_stmt}"
