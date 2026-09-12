@@ -2425,6 +2425,21 @@ EVRInputError BaseInput::GetOriginTrackedDeviceInfo(VRInputValueHandle_t origin,
 	if (origin == vr::k_ulInvalidInputValueHandle)
 		return vr::VRInputError_InvalidHandle;
 
+	// A hand origin is a valid handle even while that hand's device doesn't exist yet (controller
+	// asleep, or the runtime reported the action active before the interaction-profile event created
+	// the device). SteamVR answers with an invalid device index rather than an error; apps like
+	// Vivecraft throw on the error, crashing the game, but handle a -1 index fine.
+	const InputValueHandle* ivh = cast_IVH(origin);
+	if (ivh->type == InputSource::HAND_LEFT || ivh->type == InputSource::HAND_RIGHT) {
+		std::shared_ptr<ITrackedDevice> handDev = BackendManager::Instance().GetDeviceByHand(
+		    ivh->type == InputSource::HAND_LEFT ? ITrackedDevice::HAND_LEFT : ITrackedDevice::HAND_RIGHT);
+		if (!handDev) {
+			info->trackedDeviceIndex = vr::k_unTrackedDeviceIndexInvalid;
+			info->devicePath = origin;
+			return VRInputError_None;
+		}
+	}
+
 	std::shared_ptr<ITrackedDevice> dev = ivhToDev(origin);
 
 	if (!dev)
