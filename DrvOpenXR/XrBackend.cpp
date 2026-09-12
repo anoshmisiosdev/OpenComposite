@@ -199,6 +199,20 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 	if (!usingApplicationGraphicsAPI) {
 		usingApplicationGraphicsAPI = true;
 
+#if defined(SUPPORT_GL) && defined(__APPLE__)
+		if (tex->eType == vr::TextureType_OpenGL) {
+			// macOS: the session is already correctly bound to Metal (the temporary binding) and OpenXR
+			// has no OpenGL binding here. Recreating the session would tear down and restart the runtime's
+			// streaming server, dropping the already-connected headset/simulator client (which does not
+			// auto-reconnect) so every subsequent frame renders into a session with no client - a black
+			// headset. So keep the existing Metal session and its command queue untouched; GLMetalCompositor
+			// copies the GL frames into that session's Metal swapchains.
+			OOVR_FALSE_ABORT(temporaryGraphics && temporaryGraphics->GetAsMetal());
+			OOVR_LOG("macOS OpenGL app: reusing existing Metal session (no session recreate)");
+		} else
+#endif
+		{
+
 		OOVR_LOG("Recreating OpenXR session for application graphics API");
 
 		// Shutdown old session - apparently Varjo doesn't like the session being destroyed
@@ -309,12 +323,8 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		}
 		case vr::TextureType_OpenGL: {
 #if defined(SUPPORT_GL) && defined(__APPLE__)
-			// macOS: there is no OpenGL OpenXR binding. The session was created with the temporary Metal
-			// binding, and GL frames are copied through IOSurface into Metal swapchains by GLMetalCompositor.
-			// Keep the existing session (and its command queue) rather than recreating it.
-			OOVR_FALSE_ABORT(temporaryGraphics && temporaryGraphics->GetAsMetal());
-			OOVR_LOG("macOS OpenGL app: keeping Metal session, frames go through IOSurface");
-			DrvOpenXR::SetupSession();
+			// Unreachable: the macOS GL path is handled before the session-recreate block above.
+			OOVR_ABORT("macOS OpenGL should not reach the session-recreate switch");
 #elif defined(SUPPORT_GL)
 			// The spec requires that we call this before starting a session using OpenGL. Unfortunately we
 			// can't actually do anything with this information, since the game has already created the context.
@@ -400,9 +410,9 @@ void XrBackend::CheckOrInitCompositors(const vr::Texture_t* tex)
 		}
 
 		// Real graphics binding should be setup now - get rid of temporary graphics
-		// (unless the session is still bound to it, as on macOS where GL apps render through the Metal binding)
-		if (graphicsBinding)
-			temporaryGraphics.reset();
+		temporaryGraphics.reset();
+
+		} // end of the session-recreate path (skipped on macOS GL)
 	}
 
 	for (std::unique_ptr<Compositor>& compositor : compositors) {
